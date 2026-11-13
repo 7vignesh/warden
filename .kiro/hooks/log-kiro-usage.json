@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Log Kiro usage after each task",
+      "trigger": "PostTaskExec",
+      "description": "After each spec task, remind the agent to append a short entry to docs/KIRO_USAGE.md for the hackathon write-up.",
+      "action": {
+        "type": "agent",
+        "prompt": "A spec task just finished. Append one concise row to the Log table in docs/KIRO_USAGE.md with today's date, which Kiro feature was used (spec, steering, hook, MCP, power, PBT), and the result. Skip if nothing notable happened."
+      }
+    }
+  ]
+}
