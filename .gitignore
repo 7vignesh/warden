@@ -1,0 +1,41 @@
+# NOTE: Do NOT ignore .kiro/ — the Kiroween rules require it to be committed
+# (specs, hooks, steering). Ignoring it can disqualify the submission.
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+vendor/
+
+# Build output
+dist/
+build/
+out/
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
+coverage/
+target/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs & temp
+*.log
+npm-debug.log*
+.cache/
+tmp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
