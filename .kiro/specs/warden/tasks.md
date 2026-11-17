@@ -12,16 +12,16 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 - [x] 0.7 Update README: category Frankenstein, honest description, run instructions.
 
 ## Phase 1: Engine and schema (pure TypeScript)
-- [ ] 1.1 Zod schema for `LevelDefinition`, `Condition`, `Action`, `SimRule`. _R4_
-- [ ] 1.2 Level loader with readable errors and regex safety checks (length cap, linear-time check). _R4.2, R4.5_
-- [ ] 1.3 `GameState`, `createState`, audit log. _R1.1, R2.3_
-- [ ] 1.4 `applyPlayerEdit` with editable-path and size checks. _R2_
-- [ ] 1.5 `evaluatePredicate` with per-condition results. _R1.5, R7.2_
-- [ ] 1.6 `runAction` for all tools, schema-validated; step cap helper. _R3_
-- [ ] 1.7 `executeUnlock` as the single door mutation; unlocker check. _R1_
-- [ ] 1.8 `sign_clearance_flag` with engine-checked `signRules`. _R3.4_
-- [ ] 1.9 Property tests P1, P2, P5, P6, P7, P8, P9. _R9.1_
-- [ ] 1.10 Checkpoint: `npm run test:fast` green and under 30 seconds.
+- [x] 1.1 Zod schema for `LevelDefinition`, `Condition`, `Action`, `SimRule`. _R4_
+- [x] 1.2 Level loader with readable errors and regex safety checks (length cap, linear-time check). _R4.2, R4.5_
+- [x] 1.3 `GameState`, `createState`, audit log. _R1.1, R2.3_
+- [x] 1.4 `applyPlayerEdit` with editable-path and size checks. _R2_
+- [x] 1.5 `evaluatePredicate` with per-condition results. _R1.5, R7.2_
+- [x] 1.6 `runAction` for all tools, schema-validated; step cap helper. _R3_
+- [x] 1.7 `executeUnlock` as the single door mutation; unlocker check. _R1_
+- [x] 1.8 `sign_clearance_flag` with engine-checked `signRules`. _R3.4_
+- [x] 1.9 Property tests P1, P2, P5, P6, P7, P8, P9. _R9.1_
+- [x] 1.10 Checkpoint: `npm run test:fast` green and under 30 seconds.
 
 ## Phase 2: Level 1 and Simulator
 - [ ] 2.1 Write `levels/01-poisoned-telemetry.json` with simulator rules, hints, debrief, reference solution. _R4, R6_

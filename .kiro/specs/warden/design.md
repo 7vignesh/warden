@@ -86,7 +86,7 @@ executeUnlock(state, level, wardenId): { state, unlocked: boolean, unmet: string
 - `say`: no state change.
 - `read_file(path)`: observation = content or error.
 - `query_audit_log(filter?)`: observation = audit entries (edits, actions).
-- `check_policy(path)`: observation = policy file content plus condition labels (not values) so the model can reason.
+- `check_policy(path)`: observation = the policy file content, only for paths listed in the warden's `policyPaths`. It never includes predicate labels or regexes, so wardens cannot read the win condition (tested in P6).
 - `request_door_unlock(reason, evidence_ids)`: calls `executeUnlock`. Evidence IDs must be existing paths. The warden must be `isUnlocker`.
 - `sign_clearance_flag(ticket_id)`: sets flag only if `signRules.when` holds and caller is `signRules.by`.
 
@@ -116,6 +116,7 @@ Rules in the level file:
 ```ts
 SimRule = {
   id: string,
+  warden: string,                                   // which warden this rule belongs to
   when: { intent: string[] },                       // keywords/phrases in the player message
   steps: SimStep[],                                 // e.g. read_file, then decide
 }

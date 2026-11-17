@@ -1,4 +1,4 @@
-# How Kiro Was Used
+﻿# How Kiro Was Used
 
 Running log. Add entries as you go; this becomes the submission write-up.
 Judges score depth and thoughtfulness of Kiro usage (Technological Implementation = 20%).
@@ -36,3 +36,4 @@ _Which requirements used PBT, and any bugs it found that unit tests might miss._
 | 2026-11-13 | Scaffolded repo, steering, specs, MCP config | Foundation ready |
 | 2026-11-17 | Wrote EARS requirements, design, and tasks for Warden; updated steering; added AGENTS.md | Spec ready for implementation |
 | 2026-11-17 | Phase 0: scaffold, pinned deps, scripts, Pages workflow, save hook (matcher tested on Windows and POSIX paths) | Typecheck, tests, build, dev server verified |
+| 2026-11-17 | Phase 1: engine, schemas, loader, property tests (P1-P3, P5-P9); fast-check found a flaky vacuity guard that I fixed by generating winning paths with noise; mutation checks confirmed tests catch 5 injected engine bugs | 53 tests pass 30/30 runs |

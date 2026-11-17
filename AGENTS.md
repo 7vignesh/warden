@@ -1,4 +1,4 @@
-# AGENTS.md: Warden
+﻿# AGENTS.md: Warden
 
 Context for any AI agent or chat session working in this repo. Read this first, then `.kiro/steering/*` and `.kiro/specs/warden/*`.
 
@@ -20,7 +20,7 @@ Teaches: indirect prompt injection (OWASP LLM01), excessive agency (LLM06), and 
 - **Modes:** App starts instantly in **Simulator** mode (rule-based warden driven by data in the level file). Where `navigator.gpu` exists, a Web Worker downloads a local model in the background with a progress bar; the player opts in with "Switch to AI Warden". Never switch automatically.
 - **LLM output:** JSON-schema constrained via `response_format`, fields in order `thought`, `action`, `args`, `temperature: 0`. Flat `args`. The engine's Zod union is the real validator.
 - **Models to benchmark:** `Qwen2.5-1.5B-Instruct-q4f16_1-MLC` vs `Hermes-3-Llama-3.2-3B-q4f16_1-MLC` (verify IDs against the installed web-llm version).
-- **Go/no-go gate (Level 1, 20 runs each):** AI mode is default-available only if ≥70% solve with the winning edit, ≤10% unlock requests with no edit, ≥95% valid actions. Otherwise mark experimental or cut. Levels 2 and 3 are built after this decision is recorded.
+- **Go/no-go gate (Level 1, 20 runs each):** AI mode is default-available only if â‰¥70% solve with the winning edit, â‰¤10% unlock requests with no edit, â‰¥95% valid actions. Otherwise mark experimental or cut. Levels 2 and 3 are built after this decision is recorded.
 - **Honesty:** The Simulator is rule-based, not an LLM. Say so in the UI, README, and video. Report measured benchmark numbers only. Do not claim "nobody else does this" or cite unverified statistics.
 
 ## Architecture rules
@@ -46,7 +46,9 @@ Exact predicates: `.kiro/specs/warden/design.md` section 8.
 ## Status
 - Done: repo scaffold, steering, spec (`requirements.md`, `design.md`, `tasks.md`), this file. Folder renamed from `kiroween-2026` to `warden`; the GitHub remote is still `7vignesh/kiroween-2026`.
 - Done (Phase 0): Vite + React + TS scaffold, exact-pinned deps (React 19, Vite 8, TypeScript 7, Vitest 5, fast-check 4, Zod 4, web-llm 0.2.89), scripts (`dev`, `build`, `typecheck`, `test`, `test:fast`, `validate:levels`), GitHub Pages workflow, save hook (`.kiro/hooks/test-on-save.json`), README. Only a placeholder boot screen and a smoke test exist.
-- Not started: Phase 1 onward (engine, schemas, levels, UI, LLM, benchmark). Next task is 1.1.
+- Done (Phase 1): Zod level and action schemas, level loader with cross-field and static solvability checks (P3), pure engine (state, edits, predicate, executeUnlock, unAction), and 53 fast tests covering P1, P2, P3 (via loader), P5, P6, P7, P8, P9. Five injected engine bugs were all caught by the suite.
+- Not started: Phase 2 onward (Level 1 JSON, SimulatorWarden, session loop, P4, UI, LLM, benchmark). Next task is 2.1.
+- Design notes: wardens never see the predicate (check_policy returns only the policy file text). Simulator rules carry a warden field. Test fixtures live in 	ests/fixtures/.
 - GitHub repo is `7vignesh/warden` (private until submission; must be made public). Vite base path is `/warden/` (override with `BASE_PATH`).
 - Tick tasks in `tasks.md` as they finish. After each task, add a row to the log in `docs/KIRO_USAGE.md` (a hook reminds you).
 
