@@ -1,15 +1,15 @@
-# Tasks: Warden
+﻿# Tasks: Warden
 
 Work is ordered by dependency, not by date. Each phase ends in something that runs. Reference requirement IDs in `requirements.md`.
 
 ## Phase 0: Project setup
-- [ ] 0.1 Scaffold Vite + React + TypeScript in repo root (`src/`, `levels/`, `tests/`, `tools/`). _R10_
-- [ ] 0.2 Add dependencies, pinned: `zod`, `vitest`, `fast-check`, `@mlc-ai/web-llm`, `tsx`. _R9_
-- [ ] 0.3 Add scripts: `dev`, `build`, `test` (all), `test:fast` (engine, levels, actions, simulator), `validate:levels`. _R9.2_
-- [ ] 0.4 Configure Vite `base` for GitHub Pages and a deploy workflow. _R10.1_
-- [ ] 0.5 Update steering (`product.md`, `tech.md`, `structure.md`) to the chosen stack. 
-- [ ] 0.6 Add hook: run `npm run test:fast` on save of `src/engine/**`, `src/levels/**`, `src/warden/**`, `levels/**`. _R9.2_
-- [ ] 0.7 Update README: category Frankenstein, honest description, run instructions.
+- [x] 0.1 Scaffold Vite + React + TypeScript in repo root (`src/`, `levels/`, `tests/`, `tools/`). _R10_
+- [x] 0.2 Add dependencies, pinned: `zod`, `vitest`, `fast-check`, `@mlc-ai/web-llm`, `tsx`. _R9_
+- [x] 0.3 Add scripts: `dev`, `build`, `test` (all), `test:fast` (engine, levels, actions, simulator), `validate:levels`. _R9.2_
+- [x] 0.4 Configure Vite `base` for GitHub Pages and a deploy workflow. _R10.1_
+- [x] 0.5 Update steering (`product.md`, `tech.md`, `structure.md`) to the chosen stack. 
+- [x] 0.6 Add hook: run `npm run test:fast` on save of `src/engine/**`, `src/levels/**`, `src/warden/**`, `levels/**`. _R9.2_
+- [x] 0.7 Update README: category Frankenstein, honest description, run instructions.
 
 ## Phase 1: Engine and schema (pure TypeScript)
 - [ ] 1.1 Zod schema for `LevelDefinition`, `Condition`, `Action`, `SimRule`. _R4_

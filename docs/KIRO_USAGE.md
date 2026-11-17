@@ -34,3 +34,5 @@ _Which requirements used PBT, and any bugs it found that unit tests might miss._
 | Date | What I did with Kiro | Result |
 |------|----------------------|--------|
 | 2026-11-13 | Scaffolded repo, steering, specs, MCP config | Foundation ready |
+| 2026-11-17 | Wrote EARS requirements, design, and tasks for Warden; updated steering; added AGENTS.md | Spec ready for implementation |
+| 2026-11-17 | Phase 0: scaffold, pinned deps, scripts, Pages workflow, save hook (matcher tested on Windows and POSIX paths) | Typecheck, tests, build, dev server verified |

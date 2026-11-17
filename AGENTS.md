@@ -45,7 +45,9 @@ Exact predicates: `.kiro/specs/warden/design.md` section 8.
 
 ## Status
 - Done: repo scaffold, steering, spec (`requirements.md`, `design.md`, `tasks.md`), this file. Folder renamed from `kiroween-2026` to `warden`; the GitHub remote is still `7vignesh/kiroween-2026`.
-- Not started: Phase 0 onward in `.kiro/specs/warden/tasks.md`. No application code exists yet.
+- Done (Phase 0): Vite + React + TS scaffold, exact-pinned deps (React 19, Vite 8, TypeScript 7, Vitest 5, fast-check 4, Zod 4, web-llm 0.2.89), scripts (`dev`, `build`, `typecheck`, `test`, `test:fast`, `validate:levels`), GitHub Pages workflow, save hook (`.kiro/hooks/test-on-save.json`), README. Only a placeholder boot screen and a smoke test exist.
+- Not started: Phase 1 onward (engine, schemas, levels, UI, LLM, benchmark). Next task is 1.1.
+- GitHub repo is `7vignesh/warden` (private until submission; must be made public). Vite base path is `/warden/` (override with `BASE_PATH`).
 - Tick tasks in `tasks.md` as they finish. After each task, add a row to the log in `docs/KIRO_USAGE.md` (a hook reminds you).
 
 ## Working agreements
