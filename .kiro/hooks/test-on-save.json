@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Run fast tests when game logic changes",
+      "trigger": "PostFileSave",
+      "matcher": "(src[\\\\/](engine|levels|warden)[\\\\/])|((^|[\\\\/])levels[\\\\/][^\\\\/]+\\.json$)|(tests[\\\\/].*\\.test\\.ts$)",
+      "description": "Runs the fast engine, level, action, and simulator tests (including fast-check properties) whenever engine, level, warden, level JSON, or test files are saved. The slow model benchmark is manual and never runs here.",
+      "action": {
+        "type": "command",
+        "command": "npm run test:fast"
+      }
+    }
+  ]
+}
