@@ -1,4 +1,4 @@
-﻿# How Kiro Was Used
+# How Kiro Was Used
 
 Running log. Add entries as you go; this becomes the submission write-up.
 Judges score depth and thoughtfulness of Kiro usage (Technological Implementation = 20%).

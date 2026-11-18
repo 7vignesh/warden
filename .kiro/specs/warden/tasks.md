@@ -1,4 +1,4 @@
-﻿# Tasks: Warden
+# Tasks: Warden
 
 Work is ordered by dependency, not by date. Each phase ends in something that runs. Reference requirement IDs in `requirements.md`.
 
