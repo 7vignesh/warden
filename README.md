@@ -36,7 +36,10 @@ npm run typecheck
 npm run build        # production build (base path /warden/)
 npm run preview      # serve the production build locally
 npm run e2e          # build, then play Level 1 in Edge or Chrome (needs one installed)
+npm run bench -- --smoke   # real local model in headless Edge: downloads about 0.8 GB once
 ```
+
+The AI warden needs WebGPU with 16-bit shader support. On an integrated laptop GPU (Intel Iris Xe) one player message currently takes 1.5 to 3 minutes. See [docs/benchmarks/](docs/benchmarks/).
 
 ## How Kiro was used
 See [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md). Specs, hooks, and steering live in [.kiro/](.kiro/):

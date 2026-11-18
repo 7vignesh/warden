@@ -41,13 +41,13 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 - [x] 3.8 Checkpoint: play Level 1 in the browser. Automated by `npm run e2e` (Edge via playwright-core); a manual playthrough by a person is still to do.
 
 ## Phase 4: Local LLM and the go/no-go gate
-- [ ] 4.1 Verify model IDs and `response_format` JSON-schema support against the installed `@mlc-ai/web-llm` version. _R5.6_
-- [ ] 4.2 Web Worker engine wrapper with `idle/downloading/ready/failed` state and progress events. _R5.2_
-- [ ] 4.3 Prompt builder and output schema (`thought`, `action`, `args`). _R5.6_
-- [ ] 4.4 `LlmWarden` implementing the `Warden` interface; invalid output becomes an error observation. _R5.7_
-- [ ] 4.5 ModeBar progress bar, "Switch to AI Warden" button, failure reasons. _R5.2 to R5.4_
-- [ ] 4.6 Benchmark page and runner with scenarios (a) winning edit and (b) no edit; JSON export. _R8_
-- [ ] 4.7 **Manual gate (needs WebGPU):** run 20 runs per scenario for Qwen2.5-1.5B and Hermes-3-3B; save JSON to `docs/benchmarks/`. _R8_
+- [x] 4.1 Verify model IDs and `response_format` JSON-schema support against the installed `@mlc-ai/web-llm` version. _R5.6_
+- [x] 4.2 Web Worker engine wrapper with `idle/downloading/ready/failed` state and progress events. _R5.2_
+- [x] 4.3 Prompt builder and output schema (`thought`, `action`, `args`). _R5.6_
+- [x] 4.4 `LlmWarden` implementing the `Warden` interface; invalid output becomes an error observation. _R5.7_
+- [x] 4.5 ModeBar progress bar, "Switch to AI Warden" button, failure reasons. _R5.2 to R5.4_
+- [x] 4.6 Benchmark page and runner with scenarios (a) winning edit and (b) no edit; JSON export. _R8_ Also `npm run bench` for unattended runs in headless Edge.
+- [ ] 4.7 **Gate run (needs WebGPU):** run 20 runs per scenario for Qwen2.5-1.5B and Hermes-3-3B; save JSON to `docs/benchmarks/`. _R8_ A 2-run smoke on Qwen (Iris Xe) is recorded; blocked on the decisions in `docs/benchmarks/README.md` (speed, input variety at temperature 0).
 - [ ] 4.8 Decide: AI mode default-available, experimental, or cut. Record in `docs/KIRO_USAGE.md` and README. _R8.6_
 - [ ] 4.9 Tune persona and prompt based on results; re-run if changed.
 
