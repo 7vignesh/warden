@@ -30,6 +30,15 @@ export async function checkWebGpu(): Promise<{ ok: true } | { ok: false; reason:
   }
 }
 
+/** Turns a model load error into a sentence a player can act on. The raw message is kept at the end. */
+export function describeLoadError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  if (/failed to fetch|networkerror|network error|err_/i.test(raw)) return `Could not download the model. Check your connection. (${raw})`;
+  if (/quota|storage|cache/i.test(raw)) return `Not enough browser storage to cache the model. (${raw})`;
+  if (/device|adapter|gpu|out of memory|oom/i.test(raw)) return `The GPU could not run the model. (${raw})`;
+  return raw;
+}
+
 /**
  * Loads a web-llm model in a Web Worker and exposes it as a ChatModel.
  * web-llm is imported lazily, so Simulator mode never downloads its code.
@@ -87,7 +96,21 @@ export class LocalModel implements ChatModel {
       this.worker?.terminate();
       this.worker = null;
       this.engine = null;
-      this.set({ kind: "failed", reason: e instanceof Error ? e.message : String(e) });
+      this.set({ kind: "failed", reason: describeLoadError(e) });
+    }
+  }
+
+  /** Frees GPU memory and stops the worker. Afterwards the model can be loaded again. */
+  async unload(): Promise<void> {
+    const engine = this.engine;
+    this.engine = null;
+    this.loading = null;
+    try {
+      await engine?.unload();
+    } finally {
+      this.worker?.terminate();
+      this.worker = null;
+      this.set({ kind: "idle" });
     }
   }
 

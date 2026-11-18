@@ -1,11 +1,14 @@
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 import fc from "fast-check";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MAX_WARDEN_STEPS, TOOL_NAMES } from "../src/engine";
 import { createSession, editSession, sendMessage } from "../src/session/session";
 import type { ChatMessage, ChatModel } from "../src/warden/llm/chat";
+import { describeLoadError } from "../src/warden/llm/client";
 import { createLlmWarden, type Exchange } from "../src/warden/llm/llm-warden";
-import { CANDIDATE_MODELS, GAME_MODEL } from "../src/warden/llm/models";
+import { CANDIDATE_MODELS, GAME_MODEL, WEBLLM_VERSION } from "../src/warden/llm/models";
 import { buildPrompt } from "../src/warden/llm/prompt";
 import { buildOutputSchema, parseModelOutput } from "../src/warden/llm/protocol";
 import { labLevel, PATHS } from "./fixtures/lab-level";
@@ -31,6 +34,13 @@ function fakeModel(outputs: readonly string[]) {
 const json = (v: unknown) => JSON.stringify(v);
 
 describe("model list (task 4.1)", () => {
+  it("describes load errors in plain words and keeps the raw message", () => {
+    expect(describeLoadError(new TypeError("Failed to fetch"))).toBe("Could not download the model. Check your connection. (Failed to fetch)");
+    expect(describeLoadError(new Error("QuotaExceededError: storage full"))).toContain("Not enough browser storage");
+    expect(describeLoadError(new Error("GPUDevice lost"))).toContain("The GPU could not run the model.");
+    expect(describeLoadError("weird")).toBe("weird");
+  });
+
   it("every candidate model exists in the installed web-llm, with the recorded VRAM", () => {
     for (const m of CANDIDATE_MODELS) {
       const record = prebuiltAppConfig.model_list.find((r) => r.model_id === m.id);
@@ -38,6 +48,11 @@ describe("model list (task 4.1)", () => {
       expect(Math.round(record?.vram_required_MB ?? 0), m.id).toBe(m.vramMB);
     }
     expect(CANDIDATE_MODELS).toContain(GAME_MODEL);
+  });
+
+  it("records the installed web-llm version", () => {
+    const pkg = JSON.parse(readFileSync(join(process.cwd(), "node_modules/@mlc-ai/web-llm/package.json"), "utf8"));
+    expect(pkg.version).toBe(WEBLLM_VERSION);
   });
 });
 

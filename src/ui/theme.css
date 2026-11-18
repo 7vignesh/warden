@@ -422,6 +422,55 @@ button:disabled {
   height: auto;
 }
 
+/* ---------- AI status and benchmark ---------- */
+.ai-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-status progress {
+  width: 8rem;
+  accent-color: var(--fg);
+}
+
+.bench {
+  height: auto;
+  min-height: 100vh;
+}
+
+.bench-board {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bench select,
+.bench input {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.4rem;
+}
+
+.bench input[type="number"] {
+  width: 5rem;
+}
+
+.bench-table {
+  border-collapse: collapse;
+}
+
+.bench-table th,
+.bench-table td {
+  text-align: left;
+  padding: 0.2rem 1rem 0.2rem 0;
+  font-weight: normal;
+}
+
+.bench-table th {
+  color: var(--dim);
+}
+
 /* ---------- small screens ---------- */
 @media (max-width: 900px) {
   .app {

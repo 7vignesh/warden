@@ -5,19 +5,20 @@ import { Debrief } from "./Debrief";
 import { FileEditor } from "./FileEditor";
 import { Hints } from "./Hints";
 import { LockCircuit } from "./LockCircuit";
-import { ModeBar } from "./ModeBar";
+import { ModeBar, type AiControls } from "./ModeBar";
 import { Terminal } from "./Terminal";
 import { useGame } from "./useGame";
 
 interface GameProps {
   level: LevelDefinition;
   warden: Warden;
+  ai?: AiControls;
   hasNext: boolean;
   onNext: () => void;
 }
 
 /** One level attempt. Mount with key={level.id} so switching levels starts fresh. */
-export function Game({ level, warden, hasNext, onNext }: GameProps) {
+export function Game({ level, warden, ai, hasNext, onNext }: GameProps) {
   const game = useGame(level, warden);
   const { session } = game;
   const active = level.wardens[0];
@@ -35,7 +36,7 @@ export function Game({ level, warden, hasNext, onNext }: GameProps) {
 
   return (
     <div className="app crt">
-      <ModeBar level={level} mode={warden.kind} turn={session.state.turn} />
+      <ModeBar level={level} mode={warden.kind} turn={session.state.turn} {...(ai ? { ai } : {})} />
       <main className="board">
         <Terminal
           briefing={level.briefing}
