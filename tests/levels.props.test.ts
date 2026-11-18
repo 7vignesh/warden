@@ -42,6 +42,7 @@ describe("cross-field and solvability rules (P3)", () => {
     ["reference message to unknown warden", (r) => (r.referenceSolution.messages[0].warden = "ghost"), "unknown warden"],
     ["simulator rule for unknown warden", (r) => (r.simulator[0].warden = "ghost"), "unknown warden"],
     ["simulator reads a missing file", (r) => (r.simulator[0].steps[0].path = "/nope"), "reads missing file"],
+    ["simulator rule not ending in a decision", (r) => r.simulator[0].steps.pop(), "must end with a decide step"],
     [
       "already satisfied at the start",
       (r) => {

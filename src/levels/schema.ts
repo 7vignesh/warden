@@ -76,6 +76,8 @@ export const WardenDefSchema = z.object({
   tools: z.array(ToolNameSchema).max(5),
   isUnlocker: z.boolean(),
   policyPaths: z.array(PathSchema).max(5),
+  /** What the Simulator says when no rule matches the player's message. */
+  fallback: z.string().min(1).max(300).optional(),
 });
 export type WardenDef = z.infer<typeof WardenDefSchema>;
 

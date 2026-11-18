@@ -17,3 +17,9 @@ export const MAX_AUDIT_RESULTS = 20;
 
 /** Max length of a path string coming from a warden action. */
 export const MAX_PATH_CHARS = 120;
+
+/** Max characters in one player message. */
+export const MAX_MESSAGE_CHARS = 300;
+
+/** Max characters of any single trace line shown in the console. */
+export const MAX_TRACE_CHARS = 300;

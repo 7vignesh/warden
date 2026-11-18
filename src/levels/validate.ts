@@ -84,6 +84,9 @@ export function crossValidate(level: LevelDefinition): string[] {
   // Simulator rules must reference real things.
   for (const rule of level.simulator) {
     if (!wardenById.has(rule.warden)) problems.push(`simulator rule ${rule.id}: unknown warden ${rule.warden}`);
+    if (rule.steps[rule.steps.length - 1]?.do !== "decide") {
+      problems.push(`simulator rule ${rule.id}: must end with a decide step`);
+    }
     for (const step of rule.steps) {
       if (step.do === "read_file" && !Object.hasOwn(level.files, step.path)) {
         problems.push(`simulator rule ${rule.id}: reads missing file ${step.path}`);
