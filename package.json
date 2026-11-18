@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:fast": "vitest run --passWithNoTests engine levels actions simulator smoke",
+    "test:fast": "vitest run --passWithNoTests",
     "validate:levels": "tsx tools/validate-level.ts"
   },
   "dependencies": {
