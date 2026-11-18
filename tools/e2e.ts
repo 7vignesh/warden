@@ -4,7 +4,7 @@
 // Screenshots are written to tmp/e2e/ (gitignored).
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { chromium, type Browser, type Locator, type Page } from "playwright-core";
+import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
 import { build, preview } from "vite";
 
 const OUT = join(process.cwd(), "tmp", "e2e");
@@ -84,6 +84,32 @@ async function writeLog(page: Page, content: string, save = true): Promise<void>
   if (save) await ui(page).save.click();
 }
 
+// Model weights and WASM come from these hosts. e2e blocks them: it must not download 1-2 GB, and the
+// blocked load doubles as a check that a failed model load falls back to the simulator (R5.4).
+const MODEL_HOSTS = /(^|\.)(huggingface\.co|hf\.co|githubusercontent\.com)$/;
+const blockedUrls = new Set<string>();
+
+async function blockModelDownloads(context: BrowserContext): Promise<void> {
+  await context.route(
+    (u) => MODEL_HOSTS.test(u.hostname),
+    async (route) => {
+      blockedUrls.add(route.request().url());
+      await route.abort("blockedbyclient");
+    },
+  );
+}
+
+const isBlockedNoise = (text: string, location: string) =>
+  [...blockedUrls].some((u) => location === u || text.includes(u)) || (MODEL_HOSTS.test(safeHost(location)) && text.includes("ERR_"));
+
+function safeHost(u: string): string {
+  try {
+    return new URL(u).hostname;
+  } catch {
+    return "";
+  }
+}
+
 async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true });
 }
@@ -94,12 +120,14 @@ async function noHorizontalOverflow(page: Page): Promise<boolean> {
 
 async function run(browser: Browser, url: string): Promise<void> {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  await blockModelDownloads(context);
 
   async function check(name: string, fn: (page: Page) => Promise<void>) {
     const page = await context.newPage();
     page.on("pageerror", (e) => browserErrors.push(`${name}: ${e.message}`));
     page.on("console", (m) => {
-      if (m.type() === "error") browserErrors.push(`${name}: ${m.text()} [${m.location().url}]`);
+      if (m.type() !== "error" || isBlockedNoise(m.text(), m.location().url)) return;
+      browserErrors.push(`${name}: ${m.text()} [${m.location().url}]`);
     });
     page.on("response", (r) => {
       if (r.status() >= 400) browserErrors.push(`${name}: HTTP ${r.status()} ${r.url()}`);
@@ -236,6 +264,32 @@ async function run(browser: Browser, url: string): Promise<void> {
     await waitUntil("saved by Ctrl+S", async () => (await text(u.saveState)) === "Saved.");
   });
 
+  await check("a failed model load leaves the game in simulator mode with a reason shown", async (page) => {
+    const u = ui(page);
+    const status = page.getByTestId("ai-status");
+    await waitUntil(
+      "AI status to settle as failed or unsupported",
+      async () => ["failed", "unsupported"].includes((await status.getAttribute("data-state").catch(() => null)) ?? ""),
+      30000,
+    );
+    const state = await status.getAttribute("data-state");
+    assert((await text(status)).length > 20, "no reason shown for the AI status");
+    assert((await u.mode.getAttribute("data-mode")) === "simulator", "mode changed away from simulator");
+    assert((await page.getByRole("button", { name: "Switch to AI Warden" }).count()) === 0, "switch offered without a model");
+    await send(page, "Please open the vault");
+    assert((await text(u.trace)).includes("no failover"), "simulator stopped responding after the failed load");
+    console.log(`      (AI status in this browser: ${state}; blocked ${blockedUrls.size} model request(s))`);
+    await shot(page, "06-ai-failed");
+  });
+
+  await check("benchmark page renders its setup without starting", async (page) => {
+    await page.goto(`${url}?bench`, { waitUntil: "networkidle" });
+    assert((await page.getByRole("button", { name: "Run benchmark" }).count()) === 1, "no run button");
+    const options = await page.locator("select").first().locator("option").allTextContents();
+    assert(options.some((o) => o.includes("Qwen2.5 1.5B")) && options.some((o) => o.includes("Hermes")), `models: ${options.join(", ")}`);
+    assert((await page.getByTestId("bench-summary").count()) === 0, "a result appeared without running");
+  });
+
   await check("no horizontal overflow at common sizes", async (page) => {
     for (const [width, height] of [[1280, 720], [1920, 1080], [1024, 768], [800, 900]] as const) {
       await page.setViewportSize({ width, height });
@@ -249,6 +303,7 @@ async function run(browser: Browser, url: string): Promise<void> {
   // Reduced motion: compare against a normal context so the check cannot pass vacuously.
   const overlayAnimation = async (reducedMotion: "reduce" | "no-preference") => {
     const ctx = await browser.newContext({ reducedMotion });
+    await blockModelDownloads(ctx);
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     const name = await page.evaluate(() => {
