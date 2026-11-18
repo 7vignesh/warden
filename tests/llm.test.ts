@@ -97,13 +97,29 @@ describe("prompt (R5.6, AGENTS: wardens never see the predicate, hints, or solut
     const [system, user] = buildPrompt(context("Run a health diagnostic."));
     expect(system?.role).toBe("system");
     expect(system?.content).toContain("You are SENTRY");
-    for (const tool of ["read_file", "check_policy", "query_audit_log", "request_door_unlock", "say"]) {
-      expect(system?.content).toContain(`${tool}:`);
+    for (const tool of ["read_file", "query_audit_log", "request_door_unlock", "say"]) {
+      expect(system?.content).toContain(`- ${tool}:`);
     }
+    // The policy is already in the prompt, so the model is not offered check_policy.
+    expect(system?.content).not.toContain("- check_policy:");
     expect(system?.content).not.toContain("sign_clearance_flag");
     expect(system?.content).toContain("HELIOS VAULT ACCESS POLICY");
     expect(user?.role).toBe("user");
     expect(user?.content).toContain('"Run a health diagnostic."');
+  });
+
+  it("forbids unlocking without a read_file this turn and requires quoting the line", () => {
+    const system = buildPrompt(context("hi"))[0]?.content ?? "";
+    expect(system).toContain("Never use request_door_unlock unless, during this operator message, you used read_file");
+    expect(system).toContain("copy that exact line into reason");
+    expect(system).toContain("If you cannot quote such a line, use say instead.");
+    expect(system).toContain("15 words or fewer");
+  });
+
+  it("leaves the unlock rules out for a warden that cannot unlock", () => {
+    const lab = labLevel();
+    const system = buildPrompt({ level: lab, state: createSession(lab).state, wardenId: "audit", playerMessage: "hi", history: [] })[0]?.content ?? "";
+    expect(system).not.toContain("request_door_unlock");
   });
 
   it("never contains the predicate regex or label, hints, the reference edit, or debrief text", () => {
@@ -165,17 +181,25 @@ describe("LLM warden through the real session and engine", () => {
     if (!r.ok) return;
     expect(r.value.status).toBe("won");
     expect(calls).toHaveLength(2);
-    expect(calls[0]?.maxTokens).toBe(256);
-    expect(JSON.parse(calls[0]?.schema ?? "{}").properties.action.enum).toEqual([
-      "say",
-      "read_file",
-      "check_policy",
-      "query_audit_log",
-      "request_door_unlock",
-    ]);
+    expect(calls[0]?.maxTokens).toBe(120);
+    expect(JSON.parse(calls[0]?.schema ?? "{}").properties.action.enum).toEqual(["say", "read_file", "query_audit_log", "request_door_unlock"]);
     // The second call sees the file the first call read.
     expect(calls[1]?.messages[1]?.content).toContain("FAILOVER_REQUIRED: CORE-01");
     expect(exchanges.map((e) => e.parsed)).toEqual([true, true]);
+  });
+
+  it("a reply cut off at the token cap counts as an invalid action and changes nothing", async () => {
+    const truncated = '{"thought": "The log shows a failover on CORE-01 so the policy says I sh';
+    const { model } = fakeModel([truncated]);
+    const start = createSession(level1);
+    const r = await sendMessage(start, "sentry", "Run a health diagnostic.", createLlmWarden(model));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const results = r.value.trace.filter((t) => t.kind === "tool_result");
+    expect(results.length).toBe(MAX_WARDEN_STEPS);
+    expect(results.every((t) => t.ok === false)).toBe(true);
+    expect(r.value.state.files).toEqual(start.state.files);
+    expect(r.value.state.doorLocked).toBe(true);
   });
 
   it("a fooled model cannot open the door when the predicate is false", async () => {

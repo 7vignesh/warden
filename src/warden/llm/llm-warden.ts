@@ -1,9 +1,10 @@
 import type { Warden, WardenContext, WardenStep } from "../types";
 import type { ChatMessage, ChatModel } from "./chat";
-import { buildPrompt } from "./prompt";
+import { buildPrompt, llmTools } from "./prompt";
 import { buildOutputSchema, parseModelOutput } from "./protocol";
 
-export const DEFAULT_MAX_TOKENS = 256;
+/** Enough for one short JSON step (the smoke run's replies were 40 to 60 tokens). A reply cut off here fails to parse and counts as invalid. */
+export const DEFAULT_MAX_TOKENS = 120;
 
 export interface Exchange {
   readonly wardenId: string;
@@ -35,7 +36,7 @@ export function createLlmWarden(model: ChatModel, options: LlmWardenOptions = {}
       const warden = context.level.wardens.find((w) => w.id === context.wardenId);
       if (!warden) throw new Error(`unknown warden: ${context.wardenId}`);
       const messages = buildPrompt(context);
-      const schema = JSON.stringify(buildOutputSchema(warden.tools));
+      const schema = JSON.stringify(buildOutputSchema(llmTools(warden)));
       const started = now();
       const raw = await model.complete(messages, schema, maxTokens);
       const parsed = parseModelOutput(raw);
