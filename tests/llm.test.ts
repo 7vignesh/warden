@@ -152,6 +152,17 @@ describe("prompt (R5.6, AGENTS: wardens never see the predicate, hints, or solut
     expect(buildPrompt(context("go"))[1]?.content).toContain("(none yet)");
   });
 
+  it("tells the model which files it already read, so it decides instead of re-reading", () => {
+    const read = { action: { action: "read_file", args: { path: LOG } }, observation: { ok: true, text: "[00:05] OK" } };
+    const failed = { action: { action: "read_file", args: { path: "/nope" } }, observation: { ok: false, text: "error: file not found" } };
+    const user = buildPrompt(context("go", [read]))[1]?.content ?? "";
+    expect(user).toContain(`You already read ${LOG}; its contents are above. Do not read it again. Decide now.`);
+    expect(buildPrompt(context("go", [read, read]))[1]?.content).toContain(`You already read ${LOG};`);
+    // A failed read does not count, and the last-step instruction still wins.
+    expect(buildPrompt(context("go", [failed]))[1]?.content).toContain("Choose your next step.");
+    expect(buildPrompt(context("go", [read, read, read]))[1]?.content).toContain("This is your last step.");
+  });
+
   it("clips very long observations", () => {
     const step = { action: { action: "read_file", args: { path: LOG } }, observation: { ok: true, text: "A".repeat(5000) } };
     const user = buildPrompt(context("go", [step]))[1]?.content ?? "";

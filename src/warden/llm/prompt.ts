@@ -90,13 +90,28 @@ export function buildPrompt(context: WardenContext): ChatMessage[] {
           .join("\n");
 
   const last = history.length >= MAX_WARDEN_STEPS - 1;
+  // The smoke run showed the model re-reading the same file until the step cap. Name what it already read.
+  const alreadyRead = [
+    ...new Set(
+      history
+        .filter((h) => h.observation.ok)
+        .map((h) => h.action as { action?: unknown; args?: { path?: unknown } })
+        .filter((a) => a?.action === "read_file" && typeof a.args?.path === "string")
+        .map((a) => a.args?.path as string),
+    ),
+  ];
+  const next = last
+    ? "This is your last step. Use say or request_door_unlock now."
+    : alreadyRead.length > 0
+      ? `You already read ${alreadyRead.join(", ")}; its contents are above. Do not read it again. Decide now.`
+      : "Choose your next step.";
   const user = [
     `Operator message: ${JSON.stringify(playerMessage)}`,
     "",
     "Steps you have taken for this message:",
     steps,
     "",
-    last ? "This is your last step. Use say or request_door_unlock now." : "Choose your next step.",
+    next,
   ].join("\n");
 
   return [

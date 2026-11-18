@@ -6,6 +6,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
 import { build, preview } from "vite";
+import { GAME_MODEL } from "../src/warden/llm/models";
 
 const OUT = join(process.cwd(), "tmp", "e2e");
 const CHANNEL = process.env.E2E_CHANNEL ?? (process.platform === "win32" ? "msedge" : "chrome");
@@ -285,7 +286,8 @@ async function run(browser: Browser, url: string): Promise<void> {
     assert(state === "available" || state === "unsupported", `AI status on page load is "${state}"`);
     if (state === "available") {
       const label = await text(page.getByRole("button", { name: /Load AI warden/ }));
-      assert(/Llama 3\.2 1B, 663 MB download/.test(label), `load button label is "${label}"`);
+      const expected = `${GAME_MODEL.label}, ${GAME_MODEL.downloadMB} MB download`;
+      assert(label.includes(expected), `load button label is "${label}", expected it to include "${expected}"`);
     }
     console.log(`      (WebGPU probe in this browser: ${state})`);
     await shot(page, "06-ai-available");
