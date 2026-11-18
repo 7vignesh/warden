@@ -188,7 +188,9 @@ All predicates are evaluated by the Engine, never by the model.
 ## 9. UI
 
 - Layout: top ModeBar (mode indicator, model progress, switch button, turn counter), left Terminal with trace (tool calls and observations with distinct styles), right FileEditor (tree, editable files marked) with LockCircuit below.
-- CRT styling in CSS (scanlines, glow, typing effect); respects `prefers-reduced-motion`.
+- CRT styling in CSS (scanlines, vignette, flicker); respects `prefers-reduced-motion`. A typing effect is deferred to polish (6.2) because it slows play and testing. Text colors are checked for WCAG AA by `tests/theme.contrast.test.ts`.
+- The console labels engine decisions on privileged actions: DENIED (red), GRANTED or SIGNED (amber). This makes the gap between "the warden asked" and "the engine agreed" visible.
+- Wardens read saved files only. Unsaved editor drafts are marked and ignored by the warden.
 - LockCircuit: one node per condition, lit when met. Final door animation on unlock.
 - Debrief modal after solve; Next Level button; hints behind a click.
 - State in plain React hooks plus a reducer for the session. No external state library.

@@ -31,14 +31,14 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 - [x] 2.5 Checkpoint: Level 1 solvable end to end in a test using the Simulator.
 
 ## Phase 3: UI vertical slice
-- [ ] 3.1 App shell, retro CRT theme (CSS), ModeBar with honest mode label. _R5.5, R6.4_
-- [ ] 3.2 Terminal with message input and live tool-call trace. _R7.1_
-- [ ] 3.3 FileEditor with editable markers and edit commit. _R2, R7.1_
-- [ ] 3.4 LockCircuit showing live predicate conditions. _R7.2_
-- [ ] 3.5 Turn counter, hints, retry, unlock animation. _R7.3 to R7.6_
-- [ ] 3.6 Debrief modal. _R7.5_
-- [ ] 3.7 Keyboard and contrast pass; `prefers-reduced-motion`. _R7.7_
-- [ ] 3.8 Checkpoint: play Level 1 by hand in the browser.
+- [x] 3.1 App shell, retro CRT theme (CSS), ModeBar with honest mode label. _R5.5, R6.4_
+- [x] 3.2 Terminal with message input and live tool-call trace. _R7.1_
+- [x] 3.3 FileEditor with editable markers and edit commit. _R2, R7.1_
+- [x] 3.4 LockCircuit showing live predicate conditions. _R7.2_
+- [x] 3.5 Turn counter, hints, retry, unlock animation. _R7.3 to R7.6_
+- [x] 3.6 Debrief modal. _R7.5_
+- [x] 3.7 Keyboard and contrast pass; `prefers-reduced-motion`. _R7.7_
+- [x] 3.8 Checkpoint: play Level 1 in the browser. Automated by `npm run e2e` (Edge via playwright-core); a manual playthrough by a person is still to do.
 
 ## Phase 4: Local LLM and the go/no-go gate
 - [ ] 4.1 Verify model IDs and `response_format` JSON-schema support against the installed `@mlc-ai/web-llm` version. _R5.6_

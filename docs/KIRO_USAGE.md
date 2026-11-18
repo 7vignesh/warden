@@ -38,3 +38,4 @@ _Which requirements used PBT, and any bugs it found that unit tests might miss._
 | 2026-11-17 | Phase 0: scaffold, pinned deps, scripts, Pages workflow, save hook (matcher tested on Windows and POSIX paths) | Typecheck, tests, build, dev server verified |
 | 2026-11-17 | Phase 1: engine, schemas, loader, property tests (P1-P3, P5-P9); fast-check found a flaky vacuity guard that I fixed by generating winning paths with noise; mutation checks confirmed tests catch 5 injected engine bugs | 53 tests pass 30/30 runs |
 | 2026-11-17 | Phase 2: Level 1 JSON, simulator, session loop, registry, P4 solvability tests; bug injection into simulator, session, and level caught 9 of 9 real mutations | 91 tests pass 30/30 runs |
+| 2026-11-17 | Phase 3: UI and an e2e script driving Edge; e2e found a preview base-path bug and a favicon 404, and screenshot review led to clearer DENIED/GRANTED labels | 106 fast tests 20/20; e2e 12/12 on 3 runs |

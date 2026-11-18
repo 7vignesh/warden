@@ -2,7 +2,7 @@
 
 > Built for [Kiroween 2026](https://kiroween.devpost.com/). Category: **Frankenstein**.
 
-**Status:** Early development. Phase 0 (project setup) is complete. The game engine, levels, and UI are not built yet. See [.kiro/specs/warden/tasks.md](.kiro/specs/warden/tasks.md) for progress.
+**Status:** Early development. Level 1 is playable in Simulator mode. AI mode and Levels 2 and 3 are not built yet. See [.kiro/specs/warden/tasks.md](.kiro/specs/warden/tasks.md) for progress.
 
 ## The problem
 Tool-using AI agents read logs, tickets, and policy files. Anyone who can write to those sources can manipulate the agent: indirect prompt injection, excessive agency, and confused-deputy trust between agents. Most people only practice chat-style jailbreaks, so they rarely see this attack class in action.
@@ -34,6 +34,8 @@ npm run test:fast    # engine, level, action, and simulator tests
 npm test             # all tests
 npm run typecheck
 npm run build        # production build (base path /warden/)
+npm run preview      # serve the production build locally
+npm run e2e          # build, then play Level 1 in Edge or Chrome (needs one installed)
 ```
 
 ## How Kiro was used

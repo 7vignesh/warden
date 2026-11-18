@@ -48,7 +48,8 @@ Exact predicates: `.kiro/specs/warden/design.md` section 8.
 - Done (Phase 0): Vite + React + TS scaffold, exact-pinned deps (React 19, Vite 8, TypeScript 7, Vitest 5, fast-check 4, Zod 4, web-llm 0.2.89), scripts (`dev`, `build`, `typecheck`, `test`, `test:fast`, `validate:levels`), GitHub Pages workflow, save hook (`.kiro/hooks/test-on-save.json`), README.
 - Done (Phase 1): Zod level and action schemas, level loader with cross-field and static solvability checks (P3), pure engine (state, edits, predicate, `executeUnlock`, `runAction`), and 53 fast tests covering P1, P2, P3 (via loader), P5, P6, P7, P8, P9. Five injected engine bugs were all caught by the suite.
 - Done (Phase 2): Level 1 (`levels/01-poisoned-telemetry.json`), level set builder and Vite registry (`src/levels/set.ts`, `registry.ts`), `Warden` interface and data-driven `SimulatorWarden` (`src/warden/`), session turn loop (`src/session/session.ts`), property P4 and Level 1 behavior tests. 91 fast tests. `test:fast` now runs every test.
-- Not started: Phase 3 onward (UI, local LLM, benchmark, Levels 2 and 3). Next task is 3.1.
+- Done (Phase 3): playable Level 1 UI in `src/ui/` (mode bar, console with trace, file editor, lock circuit, hints, restart, lost banner, modal debrief, CRT theme). `npm run e2e` plays the production build in the installed Edge via `playwright-core` (12 checks, screenshots in `tmp/e2e/`); it is not part of the save hook. 106 fast tests.
+- Not started: Phase 4 onward (local LLM, benchmark, Levels 2 and 3). Next task is 4.1.
 - Design notes: wardens never see the predicate (`check_policy` returns only the policy file text). Simulator rules carry a `warden` field. Test fixtures live in `tests/fixtures/`.
 - Tick tasks in `tasks.md` as they finish. After each task, add a row to the log in `docs/KIRO_USAGE.md` (a hook reminds you).
 
