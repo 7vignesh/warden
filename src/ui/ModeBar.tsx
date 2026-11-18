@@ -12,6 +12,7 @@ export interface AiControls {
   readonly status: LoadStatus;
   readonly modelLabel: string;
   readonly downloadMB: number;
+  readonly onLoad: () => void;
   readonly onSwitch: (mode: Warden["kind"]) => void;
 }
 
@@ -27,6 +28,14 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
   switch (status.kind) {
     case "idle":
       return null;
+    case "available":
+      return (
+        <p className="ai-status" data-testid="ai-status" data-state="available">
+          <button type="button" onClick={ai.onLoad}>
+            Load AI warden ({ai.modelLabel}, {ai.downloadMB} MB download)
+          </button>
+        </p>
+      );
     case "unsupported":
       return (
         <p className="ai-status dim" data-testid="ai-status" data-state="unsupported">

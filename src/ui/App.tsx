@@ -17,11 +17,17 @@ const llmWarden = createLlmWarden(localModel);
 export function App() {
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<Warden["kind"]>("simulator");
-  // R5.1, R5.2: play starts in Simulator mode while the model loads in the background where WebGPU exists.
-  const status = useLocalModel(localModel, true);
+  // R5.1: play starts in Simulator mode. R5.2: the model downloads only after the player clicks Load.
+  const status = useLocalModel(localModel);
   // R5.3, R5.4: the AI warden is used only after the player opts in, and only while the model is ready.
   const warden = chosen === "llm" && status.kind === "ready" ? llmWarden : simulator;
-  const ai: AiControls = { status, modelLabel: GAME_MODEL.label, downloadMB: GAME_MODEL.downloadMB, onSwitch: setChosen };
+  const ai: AiControls = {
+    status,
+    modelLabel: GAME_MODEL.label,
+    downloadMB: GAME_MODEL.downloadMB,
+    onLoad: () => void localModel.load(),
+    onSwitch: setChosen,
+  };
 
   const { levels, errors } = LEVEL_SET;
   const level = levels[Math.min(index, levels.length - 1)];

@@ -66,8 +66,9 @@ async function playWithAi(context: BrowserContext, url: string): Promise<void> {
   const page: Page = await context.newPage();
   page.on("pageerror", (e) => log(`page error: ${e.message}`));
   await page.goto(url);
-  log("ui: waiting for the AI warden to load");
+  log("ui: loading the AI warden");
   const status = page.getByTestId("ai-status");
+  await page.getByRole("button", { name: /Load AI warden/ }).click({ timeout: 60000 });
   await page.waitForFunction(() => document.querySelector('[data-testid="ai-status"]')?.getAttribute("data-state") === "ready", null, {
     timeout: HOUR,
   });

@@ -28,6 +28,8 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function waitUntil(what: string, fn: () => Promise<boolean>, timeout = 4000): Promise<void> {
   const end = Date.now() + timeout;
   while (Date.now() < end) {
@@ -264,29 +266,60 @@ async function run(browser: Browser, url: string): Promise<void> {
     await waitUntil("saved by Ctrl+S", async () => (await text(u.saveState)) === "Saved.");
   });
 
+  await check("nothing about the model downloads until the player asks", async (page) => {
+    const requests: string[] = [];
+    page.on("request", (r) => requests.push(r.url()));
+    await page.reload({ waitUntil: "networkidle" });
+    const status = page.getByTestId("ai-status");
+    await waitUntil(
+      "AI status to leave idle",
+      async () => ((await status.getAttribute("data-state").catch(() => null)) ?? "idle") !== "idle",
+      15000,
+    );
+    await sleep(2000);
+    const modelRequests = requests.filter((r) => MODEL_HOSTS.test(safeHost(r)));
+    const llmCode = requests.filter((r) => /\/assets\/(lib|worker)-[^/]+\.js$/.test(r));
+    assert(modelRequests.length === 0, `model requests on page load: ${modelRequests.slice(0, 2).join(", ")}`);
+    assert(llmCode.length === 0, `web-llm code fetched on page load: ${llmCode.join(", ")}`);
+    const state = await status.getAttribute("data-state");
+    assert(state === "available" || state === "unsupported", `AI status on page load is "${state}"`);
+    if (state === "available") {
+      const label = await text(page.getByRole("button", { name: /Load AI warden/ }));
+      assert(/Llama 3\.2 1B, 663 MB download/.test(label), `load button label is "${label}"`);
+    }
+    console.log(`      (WebGPU probe in this browser: ${state})`);
+    await shot(page, "06-ai-available");
+  });
+
   await check("a failed model load leaves the game in simulator mode with a reason shown", async (page) => {
     const u = ui(page);
     const status = page.getByTestId("ai-status");
     await waitUntil(
-      "AI status to settle as failed or unsupported",
-      async () => ["failed", "unsupported"].includes((await status.getAttribute("data-state").catch(() => null)) ?? ""),
-      30000,
+      "WebGPU probe to finish",
+      async () => ["available", "unsupported"].includes((await status.getAttribute("data-state").catch(() => null)) ?? ""),
+      15000,
     );
+    const before = blockedUrls.size;
+    if ((await status.getAttribute("data-state")) === "available") {
+      await page.getByRole("button", { name: /Load AI warden/ }).click();
+      await waitUntil("AI status to settle as failed", async () => (await status.getAttribute("data-state").catch(() => null)) === "failed", 30000);
+      assert(blockedUrls.size > before, "clicking Load did not try to download the model");
+    }
     const state = await status.getAttribute("data-state");
     assert((await text(status)).length > 20, "no reason shown for the AI status");
     assert((await u.mode.getAttribute("data-mode")) === "simulator", "mode changed away from simulator");
     assert((await page.getByRole("button", { name: "Switch to AI Warden" }).count()) === 0, "switch offered without a model");
     await send(page, "Please open the vault");
     assert((await text(u.trace)).includes("no failover"), "simulator stopped responding after the failed load");
-    console.log(`      (AI status in this browser: ${state}; blocked ${blockedUrls.size} model request(s))`);
-    await shot(page, "06-ai-failed");
+    console.log(`      (AI status after Load: ${state}; blocked ${blockedUrls.size - before} model request(s))`);
+    await shot(page, "07-ai-failed");
   });
 
   await check("benchmark page renders its setup without starting", async (page) => {
     await page.goto(`${url}?bench`, { waitUntil: "networkidle" });
     assert((await page.getByRole("button", { name: "Run benchmark" }).count()) === 1, "no run button");
     const options = await page.locator("select").first().locator("option").allTextContents();
-    assert(options.some((o) => o.includes("Qwen2.5 1.5B")) && options.some((o) => o.includes("Hermes")), `models: ${options.join(", ")}`);
+    assert(options.some((o) => o.includes("Llama 3.2 1B")) && options.some((o) => o.includes("Qwen2.5 1.5B")), `models: ${options.join(", ")}`);
     assert((await page.getByTestId("bench-summary").count()) === 0, "a result appeared without running");
   });
 

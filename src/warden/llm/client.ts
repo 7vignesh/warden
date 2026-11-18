@@ -3,6 +3,8 @@ import type { ChatMessage, ChatModel } from "./chat";
 export type LoadStatus =
   | { readonly kind: "idle" }
   | { readonly kind: "unsupported"; readonly reason: string }
+  /** WebGPU works here, and nothing has been downloaded. The player can choose to load the model. */
+  | { readonly kind: "available" }
   | { readonly kind: "downloading"; readonly progress: number; readonly text: string }
   | { readonly kind: "ready" }
   | { readonly kind: "failed"; readonly reason: string };
@@ -69,7 +71,18 @@ export class LocalModel implements ChatModel {
     for (const l of this.listeners) l(status);
   }
 
-  /** Starts loading in the background. Safe to call more than once. */
+  /**
+   * Checks WebGPU without downloading anything, then reports "available" or "unsupported".
+   * Does nothing once loading has started.
+   */
+  async probe(): Promise<void> {
+    if (this.status.kind !== "idle") return;
+    const gpu = await checkWebGpu();
+    if (this.status.kind !== "idle") return;
+    this.set(gpu.ok ? { kind: "available" } : { kind: "unsupported", reason: gpu.reason });
+  }
+
+  /** Downloads and starts the model. Only call this after the player asks (R5.2). Safe to call more than once. */
   load(): Promise<void> {
     if (this.loading) return this.loading;
     this.loading = this.doLoad();
