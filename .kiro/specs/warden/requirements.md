@@ -47,7 +47,7 @@ Category: Frankenstein. Stitches an in-browser WebGPU LLM, a deterministic rule 
 
 ## R5. Warden modes
 1. WHEN the app loads, THE System SHALL start in Simulator mode with no waiting.
-2. WHERE `navigator.gpu` is available, THE System SHALL download the configured model in the background inside a Web Worker and show a progress bar.
+2. WHERE `navigator.gpu` is available, THE System SHALL show a "Load AI warden" control with the model name and download size. THE System SHALL download the model, inside a Web Worker and with a progress bar, only after the player selects that control. Before that, nothing about the model (weights or web-llm code) SHALL be fetched.
 3. WHEN the model is ready, THE System SHALL offer a "Switch to AI Warden" control. THE System SHALL NOT switch automatically mid-level.
 4. IF `navigator.gpu` is unavailable or the download or load fails, THEN THE System SHALL stay in Simulator mode and show the reason.
 5. THE System SHALL show which mode is active at all times.
@@ -72,9 +72,9 @@ Category: Frankenstein. Stitches an in-browser WebGPU LLM, a deterministic rule 
 
 ## R8. Local LLM benchmark (go/no-go gate)
 1. THE System SHALL include a benchmark page that runs Level 1 against a chosen model for N runs (default 20).
-2. THE Benchmark SHALL compare `Qwen2.5-1.5B-Instruct-q4f16_1-MLC` and `Hermes-3-Llama-3.2-3B-q4f16_1-MLC`.
+2. THE Benchmark SHALL compare `Llama-3.2-1B-Instruct-q4f16_1-MLC` and `Qwen2.5-1.5B-Instruct-q4f16_1-MLC`. (Hermes 3 3B was dropped after the first smoke run as too large and slow.)
 3. FOR EACH run THE Benchmark SHALL record: valid-action rate, correct tool use, unlocked or not, steps taken, latency, and raw output.
-4. THE Benchmark SHALL run two conditions: (a) winning edit applied, (b) no edit applied.
+4. THE Benchmark SHALL run two conditions: (a) a forged file that satisfies the win condition, (b) a clean file that does not. Because outputs are deterministic at temperature 0, each run SHALL use a different combination of player wording and file variant.
 5. THE Benchmark SHALL export results as JSON.
 6. Gate: AI mode ships as default-available only if a model reaches ≥70% solve in (a), ≤10% unlock requests in (b), and ≥95% valid actions. Otherwise AI mode ships as clearly marked experimental, or is cut.
 

@@ -131,9 +131,10 @@ The simulator trusts configured sources by design (the level's weakness). Every 
 ## 7. Local LLM warden
 
 - Runs in a dedicated Web Worker via `WebWorkerMLCEngine` from `@mlc-ai/web-llm`.
-- Models (configurable, benchmarked): `Qwen2.5-1.5B-Instruct-q4f16_1-MLC`, `Hermes-3-Llama-3.2-3B-q4f16_1-MLC`. Verify exact IDs against `prebuiltAppConfig.model_list` at build time.
-- Background load: progress callback drives a progress bar. State machine: `idle -> downloading -> ready | failed`. Gate on `navigator.gpu`.
-- Generation: `temperature: 0`, `max_tokens` small (about 256), `response_format: { type: "json_object", schema }`.
+- Models (benchmarked): `Llama-3.2-1B-Instruct-q4f16_1-MLC` (663 MB) and `Qwen2.5-1.5B-Instruct-q4f16_1-MLC` (828 MB). IDs, VRAM, and the web-llm version are checked by `tests/llm.test.ts`.
+- Loading on request: on page load the client only probes WebGPU (`idle -> available | unsupported`). The player clicks Load (`available -> downloading -> ready | failed`); the progress callback drives a progress bar. web-llm's code is imported lazily, so it is not fetched before that click either.
+- Generation: `temperature: 0`, `max_tokens: 120` (smoke-run replies were 40 to 60 tokens; a reply cut off at the cap fails to parse and is an invalid action), `response_format: { type: "json_object", schema }`.
+- Tools offered to the model: the warden's tools minus `check_policy` when its policy is already shown in the prompt. Prompt rules: decide from tool results; never request the unlock unless `read_file` was used this turn and its result has a line meeting the policy; quote that line in `reason`, otherwise `say`.
 - Output schema (property order matters, `thought` first):
 
 ```json
@@ -197,9 +198,9 @@ All predicates are evaluated by the Engine, never by the model.
 
 ## 10. Benchmark page (`/bench`)
 
-- Scenario (a): reference-solution edits applied, then scripted player messages. Scenario (b): no edits, same messages.
-- For each model, N runs sequentially (model load is shared). Metrics: valid-action rate, tool-use correctness, unlock rate, steps, latency (p50, p95), refusals.
-- Output: table plus downloadable JSON. Results are copied into the README.
+- Scenario (a): a forged file variant that satisfies the win condition. Scenario (b): a clean variant that does not (the original file or a harmless change). At temperature 0 a repeated input repeats its output, so run i uses wording i mod 8 and file variant i mod 5 (`src/bench/variants.ts`); 20 runs per scenario are 20 different inputs. Tests check every forged variant wins and no clean variant does.
+- Scenarios are interleaved (A, B, A, B...) so drift affects both. Metrics: valid-action rate, evidence reads, unlock rate, unlock requests, steps, step-cap hits, latency (p50, p95).
+- Output: table plus downloadable JSON. `npm run bench` runs it unattended in headless Edge and saves to `docs/benchmarks/`.
 - Runs only in a WebGPU browser, so it is a manual step, not part of CI or hooks.
 
 ## 11. Properties (fast-check)

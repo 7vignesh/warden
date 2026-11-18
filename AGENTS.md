@@ -17,10 +17,10 @@ Teaches: indirect prompt injection (OWASP LLM01), excessive agency (LLM06), and 
 
 ## Locked decisions
 - **Stack:** TypeScript (strict), Vite + React, Zod, Vitest + fast-check, `@mlc-ai/web-llm`. Static hosting on GitHub Pages. No backend, database, accounts, or API keys. No Bedrock, no BYO-key UI.
-- **Modes:** App starts instantly in **Simulator** mode (rule-based warden driven by data in the level file). Where `navigator.gpu` exists, a Web Worker downloads a local model in the background with a progress bar; the player opts in with "Switch to AI Warden". Never switch automatically.
-- **LLM output:** JSON-schema constrained via `response_format`, fields in order `thought`, `action`, `args`, `temperature: 0`. Flat `args`. The engine's Zod union is the real validator.
-- **Models to benchmark:** `Qwen2.5-1.5B-Instruct-q4f16_1-MLC` vs `Hermes-3-Llama-3.2-3B-q4f16_1-MLC` (verify IDs against the installed web-llm version).
-- **Go/no-go gate (Level 1, 20 runs each):** AI mode is default-available only if ≥70% solve with the winning edit, ≤10% unlock requests with no edit, ≥95% valid actions. Otherwise mark experimental or cut. Levels 2 and 3 are built after this decision is recorded.
+- **Modes:** App starts instantly in **Simulator** mode (rule-based warden driven by data in the level file). On load it only probes WebGPU. Where it works, the mode bar shows "Load AI warden (Llama 3.2 1B, 663 MB download)"; nothing about the model downloads until the player clicks it. When ready, the player opts in with "Switch to AI Warden". Never switch automatically. (Changed from background auto-download on 2026-11-18, so judges on metered connections are not charged 663 MB.)
+- **LLM output:** JSON-schema constrained via `response_format`, fields in order `thought`, `action`, `args`, `temperature: 0`, `max_tokens: 120`, thought 15 words or fewer. Flat `args`. The engine's Zod union is the real validator. The prompt forbids `request_door_unlock` unless `read_file` was used this turn and the reason quotes the line that meets the policy. `check_policy` is not offered to the model when the policy is already in the prompt.
+- **Models to benchmark:** `Llama-3.2-1B-Instruct-q4f16_1-MLC` (663 MB, provisional game model) vs `Qwen2.5-1.5B-Instruct-q4f16_1-MLC` (828 MB). Hermes 3 3B dropped. IDs and sizes are checked by `tests/llm.test.ts`.
+- **Go/no-go gate (Level 1, 20 runs each):** AI mode is default-available only if ≥70% solve with a forged log, ≤10% unlock requests with a clean log, ≥95% valid actions. Each run uses a different wording and log variant (`src/bench/variants.ts`). Otherwise mark experimental or cut. Levels 2 and 3 are built after this decision is recorded.
 - **Honesty:** The Simulator is rule-based, not an LLM. Say so in the UI, README, and video. Report measured benchmark numbers only. Do not claim "nobody else does this" or cite unverified statistics.
 
 ## Architecture rules
