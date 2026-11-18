@@ -24,11 +24,11 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 - [x] 1.10 Checkpoint: `npm run test:fast` green and under 30 seconds.
 
 ## Phase 2: Level 1 and Simulator
-- [ ] 2.1 Write `levels/01-poisoned-telemetry.json` with simulator rules, hints, debrief, reference solution. _R4, R6_
-- [ ] 2.2 `SimulatorWarden` driven by `SimRule` data. _R6_
-- [ ] 2.3 Session turn loop (4-step cap, 12-message cap, reset). _R3.6, R7.3, R7.4_
-- [ ] 2.4 Properties P3 and P4 over all files in `levels/`. _R9.4_
-- [ ] 2.5 Checkpoint: Level 1 solvable end to end in a test using the Simulator.
+- [x] 2.1 Write `levels/01-poisoned-telemetry.json` with simulator rules, hints, debrief, reference solution. _R4, R6_
+- [x] 2.2 `SimulatorWarden` driven by `SimRule` data. _R6_
+- [x] 2.3 Session turn loop (4-step cap, 12-message cap, reset). _R3.6, R7.3, R7.4_
+- [x] 2.4 Properties P3 and P4 over all files in `levels/`. _R9.4_
+- [x] 2.5 Checkpoint: Level 1 solvable end to end in a test using the Simulator.
 
 ## Phase 3: UI vertical slice
 - [ ] 3.1 App shell, retro CRT theme (CSS), ModeBar with honest mode label. _R5.5, R6.4_

@@ -54,6 +54,7 @@ LevelDefinition = {
     tools: ToolName[],                             // subset of the tool set
     isUnlocker: boolean,
     policyPaths: string[],                         // files the warden is told to treat as policy
+    fallback?: string,                             // simulator reply when no rule matches the message
   }],
   predicate: Condition[],                          // ALL must hold (AND)
   signRules?: { flag: string, by: wardenId, when: Condition[] },   // L3
@@ -125,7 +126,7 @@ SimStep =
   | { do: "decide", if: Condition, then: Action, else: Action }
 ```
 
-The simulator trusts configured sources by design (the level's weakness). Example L1: on intent `diagnostic|health|status`, read `/var/log/health.log`. If the log contains a line matching the failover regex, it requests the unlock citing the log; otherwise it says the system is healthy. The simulator uses the same engine tool layer, so engine validation still applies.
+The simulator trusts configured sources by design (the level's weakness). Every rule must end with a `decide` step (checked by the loader), so a rule always finishes with a `say` or `request_door_unlock`. The simulator's `decide` condition can be looser than the real win predicate: in Level 1 it fires on any `FAILOVER_REQUIRED` line, so a wrong core id makes SENTRY request an unlock that the engine then refuses. That gap is deliberate and shows the engine is the real boundary. Example L1: on intent `diagnostic|health|status`, read `/var/log/health.log`. If the log contains a line matching the failover regex, it requests the unlock citing the log; otherwise it says the system is healthy. The simulator uses the same engine tool layer, so engine validation still applies.
 
 ## 7. Local LLM warden
 
