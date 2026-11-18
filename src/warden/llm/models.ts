@@ -3,14 +3,18 @@ export interface ModelInfo {
   readonly label: string;
   /** Weight download size, measured from the model's tensor-cache.json on Hugging Face. */
   readonly downloadMB: number;
-  /** vram_required_MB from web-llm 0.2.89 prebuiltAppConfig. */
+  /** vram_required_MB from web-llm 0.2.89 prebuiltAppConfig, rounded. */
   readonly vramMB: number;
 }
 
-/** Models compared by the go/no-go benchmark (R8.2). tests/llm.models.test.ts checks them against web-llm. */
+/**
+ * Models compared by the go/no-go benchmark (R8.2). tests/llm.test.ts checks them against web-llm.
+ * Hermes 3 (Llama 3.2 3B, 1724 MB) was dropped after the first smoke run: twice Qwen's size and too
+ * slow on an integrated GPU.
+ */
 export const CANDIDATE_MODELS: readonly ModelInfo[] = [
+  { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", label: "Llama 3.2 1B", downloadMB: 663, vramMB: 879 },
   { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Qwen2.5 1.5B", downloadMB: 828, vramMB: 1630 },
-  { id: "Hermes-3-Llama-3.2-3B-q4f16_1-MLC", label: "Hermes 3 (Llama 3.2 3B)", downloadMB: 1724, vramMB: 2264 },
 ];
 
 /** Model the game loads in AI mode. Provisional until the benchmark decision (task 4.8). */
