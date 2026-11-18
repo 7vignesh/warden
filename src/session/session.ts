@@ -25,6 +25,8 @@ export interface TraceEntry {
   readonly text: string;
   /** For tool results: false means the action was rejected as invalid. */
   readonly ok?: boolean;
+  /** For privileged tool results: what the engine decided. */
+  readonly outcome?: "denied" | "granted" | "signed";
 }
 
 export interface Session {
@@ -72,6 +74,16 @@ export function describeAction(raw: unknown): string {
 function endsTurn(raw: unknown, observation: Observation): boolean {
   const name = actionName(raw);
   return observation.ok && (name === "say" || name === "request_door_unlock");
+}
+
+const PRIVILEGED = new Set(["request_door_unlock", "sign_clearance_flag"]);
+
+/** What the engine decided for a privileged action, so the console can highlight it. */
+function outcomeOf(raw: unknown, observation: Observation): TraceEntry["outcome"] {
+  if (observation.event === "unlocked") return "granted";
+  if (observation.event === "flag_signed") return "signed";
+  const name = actionName(raw);
+  return observation.ok && name !== undefined && PRIVILEGED.has(name) ? "denied" : undefined;
 }
 
 /** The only way the player changes files. Allowed only while the attempt is live. */
@@ -134,7 +146,14 @@ export async function sendMessage(
       trace.push({ kind: "say", wardenId, text: clip(result.observation.text) });
     } else {
       trace.push({ kind: "tool_call", wardenId, text: describeAction(output.action) });
-      trace.push({ kind: "tool_result", wardenId, text: clip(result.observation.text), ok: result.observation.ok });
+      const outcome = outcomeOf(output.action, result.observation);
+      trace.push({
+        kind: "tool_result",
+        wardenId,
+        text: clip(result.observation.text),
+        ok: result.observation.ok,
+        ...(outcome ? { outcome } : {}),
+      });
     }
     finished = endsTurn(output.action, result.observation);
   }

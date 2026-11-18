@@ -216,6 +216,20 @@ button:disabled {
 
 .line.tool_result {
   color: var(--dim);
+  margin-left: 1.25rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+
+.line.denied {
+  color: var(--red);
+  border-left-color: var(--red);
+}
+
+.line.granted,
+.line.signed {
+  color: var(--amber);
+  border-left-color: var(--amber);
 }
 
 .line.rejected {
@@ -303,6 +317,7 @@ button:disabled {
 
 .editor.readonly {
   color: var(--dim);
+  resize: none;
 }
 
 .editor:disabled {

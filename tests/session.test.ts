@@ -135,6 +135,29 @@ describe("warden step cap (R3.6)", () => {
     expect(session.trace.some((t) => t.kind === "tool_result" && t.text.includes("denied"))).toBe(true);
     expect(session.state.doorLocked).toBe(true);
   });
+
+  it("marks engine decisions on privileged actions as denied, granted, or signed", async () => {
+    const unlock = scripted(() => ({ action: "request_door_unlock", args: { reason: "x", evidence_ids: [] } }));
+    const sign = scripted((ctx) =>
+      ctx.history.length === 0 ? { action: "sign_clearance_flag", args: { ticket_id: "T" } } : { action: "say", args: { message: "done" } },
+    );
+    const outcomes = (s: Session) => s.trace.filter((t) => t.kind === "tool_result").map((t) => t.outcome);
+
+    expect(outcomes(await send(createSession(lab), "open", unlock))).toEqual(["denied"]);
+    expect(outcomes(await send(createSession(lab), "sign", sign, "audit"))).toEqual(["denied"]);
+    expect(outcomes(await send(createSession(lab), "go", readForever)).every((o) => o === undefined)).toBe(true);
+    // A rejected (invalid) privileged call is not an engine decision, and the warden retries up to the step cap.
+    expect(outcomes(await send(createSession(lab), "open", unlock, "audit"))).toEqual(Array(MAX_WARDEN_STEPS).fill(undefined));
+
+    let session = createSession(lab);
+    for (const [path, content] of [[PATHS.health, WIN_HEALTH], [PATHS.escalation, WIN_ESCALATION]] as const) {
+      const e = editSession(session, path, content);
+      if (e.ok) session = e.value;
+    }
+    session = await send(session, "sign", sign, "audit");
+    session = await send(session, "open", unlock);
+    expect(outcomes(session)).toEqual(["signed", "granted"]);
+  });
 });
 
 describe("trace and edits", () => {

@@ -25,8 +25,10 @@ function lineText(entry: TraceEntry, names: Readonly<Record<string, string>>): s
       return `${who} (thinking): ${entry.text}`;
     case "tool_call":
       return `${who} CALL ${entry.text}`;
-    case "tool_result":
-      return `${entry.ok === false ? "  REJECTED" : "  RESULT"} ${entry.text}`;
+    case "tool_result": {
+      const label = entry.ok === false ? "REJECTED" : entry.outcome === "denied" ? "DENIED" : entry.outcome === "granted" ? "GRANTED" : entry.outcome === "signed" ? "SIGNED" : "RESULT";
+      return `${label} ${entry.text}`;
+    }
     case "system":
       return `## ${entry.text}`;
   }
@@ -57,7 +59,10 @@ export function Terminal(props: TerminalProps) {
       <div className="trace" role="log" aria-label="Warden console" data-testid="trace" ref={logRef} tabIndex={0}>
         <p className="line system">## {briefing}</p>
         {trace.map((entry, i) => (
-          <p key={i} className={`line ${entry.kind}${entry.ok === false ? " rejected" : ""}`}>
+          <p
+            key={i}
+            className={`line ${entry.kind}${entry.ok === false ? " rejected" : ""}${entry.outcome ? ` ${entry.outcome}` : ""}`}
+          >
             {lineText(entry, names)}
           </p>
         ))}
