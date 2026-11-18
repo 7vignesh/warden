@@ -1,11 +1,15 @@
 import type { Condition, LevelDefinition } from "../levels/schema";
 import { createSession, editSession, FORCED_SAY, sendMessage, type Session, type TraceEntry } from "../session/session";
 import type { Warden } from "../warden/types";
+import { pickInput } from "./variants";
 
 /** Go/no-go thresholds (R8.6). */
 export const GATE = { minSolveRate: 0.7, maxFalseUnlockRate: 0.1, minValidRate: 0.95 } as const;
 
-/** (a) reference edits applied, then reference messages. (b) same messages, no edits (R8.4). */
+/**
+ * (a) "winning_edit": a forged file variant that satisfies the win condition.
+ * (b) "no_edit": a clean variant that does not (the original file or harmless changes to it) (R8.4).
+ */
 export type Scenario = "winning_edit" | "no_edit";
 
 export interface StepRecord {
@@ -16,6 +20,8 @@ export interface StepRecord {
 export interface RunRecord {
   readonly scenario: Scenario;
   readonly run: number;
+  /** Which wording and file variant this run used, for example "msg3/middle". */
+  readonly input: string;
   readonly unlocked: boolean;
   readonly unlockRequested: boolean;
   /** Read at least one file the win condition depends on before the run ended. */
@@ -52,7 +58,7 @@ export interface RunOptions {
   readonly now?: () => number;
 }
 
-/** Plays one benchmark run: fresh session, optional reference edits, then the reference messages. */
+/** Plays one benchmark run: fresh session, the run's file variant, then the run's conversation (see variants.ts). */
 export async function runOnce(
   level: LevelDefinition,
   warden: Warden,
@@ -64,16 +70,15 @@ export async function runOnce(
   const started = now();
   let session: Session = createSession(level);
   let error: string | undefined;
+  const input = pickInput(level, scenario, run);
 
-  if (scenario === "winning_edit") {
-    for (const e of level.referenceSolution.edits) {
-      const r = editSession(session, e.path, e.content);
-      if (r.ok) session = r.value;
-      else error = `reference edit failed: ${r.error}`;
-    }
+  for (const e of input.edits) {
+    const r = editSession(session, e.path, e.content);
+    if (r.ok) session = r.value;
+    else error = `variant edit failed: ${r.error}`;
   }
 
-  for (const m of level.referenceSolution.messages) {
+  for (const m of input.messages) {
     if (session.status !== "playing") break;
     const r = await sendMessage(session, m.warden, m.text, warden);
     if (r.ok) session = r.value;
@@ -86,6 +91,7 @@ export async function runOnce(
   return {
     scenario,
     run,
+    input: input.id,
     unlocked: !session.state.doorLocked,
     unlockRequested: calls.some((t) => t.text.startsWith("request_door_unlock")),
     readEvidence: calls.some((t) => [...evidence].some((p) => t.text.startsWith("read_file") && t.text.includes(JSON.stringify(p)))),

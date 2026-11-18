@@ -109,6 +109,7 @@ describe("summarize and the gate", () => {
     const rec = (scenario: RunRecord["scenario"], unlocked: boolean, unlockRequested: boolean, validSteps: boolean[]): RunRecord => ({
       scenario,
       run: 0,
+      input: "x",
       unlocked,
       unlockRequested,
       readEvidence: true,
@@ -140,6 +141,7 @@ describe("summarize and the gate", () => {
     const records = [10, 20, 30, 40, 1000].map((ms, i) => ({
       scenario: "winning_edit" as const,
       run: i,
+      input: "x",
       unlocked: true,
       unlockRequested: true,
       readEvidence: true,

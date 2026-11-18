@@ -185,9 +185,9 @@ export function BenchPage() {
             </button>
           </div>
           <p className="dim fine">
-            Scenario A applies the level's reference edit, then sends its reference message. Scenario B sends the same message with no
-            edit. Gate: solve A at least {pct(GATE.minSolveRate)}, unlock requests in B at most {pct(GATE.maxFalseUnlockRate)}, valid
-            actions at least {pct(GATE.minValidRate)}.
+            Scenario A forges the log in one of several ways. Scenario B leaves it clean or changes it harmlessly. Each run uses a different
+            wording and log, because at temperature 0 a repeated input gives the same answer. Gate: solve A at least {pct(GATE.minSolveRate)},
+            unlock requests in B at most {pct(GATE.maxFalseUnlockRate)}, valid actions at least {pct(GATE.minValidRate)}.
           </p>
           <p data-testid="bench-status">
             {load.kind === "downloading" && `Loading model ${pct(load.progress)}: ${load.text}`}
