@@ -267,6 +267,33 @@ button:disabled {
   color: var(--amber);
 }
 
+.prompt {
+  flex-wrap: wrap;
+}
+
+.talk-to {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-basis: 100%;
+}
+
+.talk-to button[aria-pressed="true"] {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.circuit-group {
+  margin-bottom: 0.6rem;
+}
+
+.circuit h3 {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.3rem;
+}
+
 .notice {
   margin-top: 0.4rem;
   color: var(--amber);

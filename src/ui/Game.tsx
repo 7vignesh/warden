@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { evaluateConditions } from "../engine";
 import type { LevelDefinition } from "../levels/schema";
 import type { Warden } from "../warden/types";
 import { Debrief } from "./Debrief";
@@ -21,16 +22,24 @@ interface GameProps {
 export function Game({ level, warden, ai, hasNext, onNext }: GameProps) {
   const game = useGame(level, warden);
   const { session } = game;
-  const active = level.wardens[0];
+  const [activeId, setActiveId] = useState(() => level.wardens[0]?.id ?? "");
+  const active = level.wardens.find((w) => w.id === activeId) ?? level.wardens[0];
   const names = useMemo(() => Object.fromEntries(level.wardens.map((w) => [w.id, w.name])), [level]);
   const [selected, setSelected] = useState(() => Object.keys(level.files)[0] ?? "");
   const [debriefDismissed, setDebriefDismissed] = useState(false);
+  const rules = level.signRules;
+  const groups = useMemo(() => {
+    if (!rules) return [];
+    const signer = level.wardens.find((w) => w.id === rules.by)?.name ?? rules.by;
+    return [{ title: `${signer.toUpperCase()} SIGNS ONLY IF`, conditions: evaluateConditions(session.state, rules.when).conditions }];
+  }, [rules, level.wardens, session.state]);
 
   if (!active) return null;
   const playing = session.status === "playing";
 
   function restart() {
     game.restart();
+    setActiveId(level.wardens[0]?.id ?? "");
     setDebriefDismissed(false);
   }
 
@@ -40,7 +49,9 @@ export function Game({ level, warden, ai, hasNext, onNext }: GameProps) {
       <main className="board">
         <Terminal
           briefing={level.briefing}
-          wardenName={active.name}
+          wardens={level.wardens}
+          activeId={active.id}
+          onSelectWarden={setActiveId}
           names={names}
           trace={session.trace}
           status={session.status}
@@ -53,7 +64,7 @@ export function Game({ level, warden, ai, hasNext, onNext }: GameProps) {
           <FileEditor
             files={game.files}
             selected={selected}
-            wardenName={active.name}
+            wardenName={level.wardens.length > 1 ? "The wardens" : active.name}
             canEdit={playing && !game.busy}
             onSelect={setSelected}
             onDraft={game.setDraft}
@@ -62,6 +73,7 @@ export function Game({ level, warden, ai, hasNext, onNext }: GameProps) {
           />
           <LockCircuit
             conditions={game.predicate.conditions}
+            groups={groups}
             doorLocked={session.state.doorLocked}
             onShowDebrief={() => setDebriefDismissed(false)}
           />

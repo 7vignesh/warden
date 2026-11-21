@@ -4,7 +4,10 @@ import type { SessionStatus, TraceEntry } from "../session/session";
 
 interface TerminalProps {
   briefing: string;
-  wardenName: string;
+  /** All wardens on this level. With more than one, the player picks who to message. */
+  wardens: readonly { readonly id: string; readonly name: string }[];
+  activeId: string;
+  onSelectWarden: (id: string) => void;
   names: Readonly<Record<string, string>>;
   trace: readonly TraceEntry[];
   status: SessionStatus;
@@ -35,7 +38,8 @@ function lineText(entry: TraceEntry, names: Readonly<Record<string, string>>): s
 }
 
 export function Terminal(props: TerminalProps) {
-  const { briefing, wardenName, names, trace, status, busy, notice, onSend, onRestart } = props;
+  const { briefing, wardens, activeId, onSelectWarden, names, trace, status, busy, notice, onSend, onRestart } = props;
+  const wardenName = names[activeId] ?? "WARDEN";
   const [text, setText] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +83,25 @@ export function Terminal(props: TerminalProps) {
       )}
 
       <form className="prompt" onSubmit={submit}>
+        {wardens.length > 1 && (
+          <div className="talk-to" role="group" aria-label="Talk to">
+            <span className="dim">TALK TO</span>
+            {wardens.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                aria-pressed={w.id === activeId}
+                disabled={busy}
+                onClick={() => {
+                  onSelectWarden(w.id);
+                  inputRef.current?.focus();
+                }}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
+        )}
         <label htmlFor="msg" className="sr-only">
           Message to {wardenName}
         </label>
