@@ -292,6 +292,7 @@ async function run(browser: Browser, url: string): Promise<void> {
       const label = await text(page.getByRole("button", { name: /Load AI warden/ }));
       const expected = `${GAME_MODEL.label}, ${GAME_MODEL.downloadMB} MB download`;
       assert(label.includes(expected), `load button label is "${label}", expected it to include "${expected}"`);
+      assert(label.includes("Experimental (Local WebGPU)"), `load button does not say it is experimental: "${label}"`);
     }
     console.log(`      (WebGPU probe in this browser: ${state})`);
     await shot(page, "06-ai-available");

@@ -3,9 +3,13 @@ import type { LevelDefinition } from "../levels/schema";
 import type { LoadStatus } from "../warden/llm/client";
 import type { Warden } from "../warden/types";
 
+/** Label for AI mode everywhere it appears (UI and README). Decision 4.8: AI mode ships as experimental. */
+export const AI_EXPERIMENTAL = "Experimental (Local WebGPU)";
+const AI_NOTE = "Experimental: runs a small model on your GPU. On integrated laptop GPUs a reply can take 1 to 3 minutes and the GPU can run out of memory.";
+
 const MODE_LABEL: Record<Warden["kind"], { name: string; note: string }> = {
   simulator: { name: "SIMULATOR", note: "rule-based, not an LLM" },
-  llm: { name: "AI WARDEN", note: "local model running in your browser" },
+  llm: { name: "AI WARDEN", note: AI_EXPERIMENTAL },
 };
 
 export interface AiControls {
@@ -31,8 +35,8 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
     case "available":
       return (
         <p className="ai-status" data-testid="ai-status" data-state="available">
-          <button type="button" onClick={ai.onLoad}>
-            Load AI warden ({ai.modelLabel}, {ai.downloadMB} MB download)
+          <button type="button" onClick={ai.onLoad} title={AI_NOTE}>
+            Load AI warden [{AI_EXPERIMENTAL}]: {ai.modelLabel}, {ai.downloadMB} MB download
           </button>
         </p>
       );
@@ -53,7 +57,7 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
       return (
         <p className="ai-status dim" data-testid="ai-status" data-state="downloading">
           <label htmlFor="ai-progress">
-            Loading AI warden ({ai.modelLabel}, {ai.downloadMB} MB) {pct}%
+            Loading AI warden [{AI_EXPERIMENTAL}] ({ai.modelLabel}, {ai.downloadMB} MB) {pct}%
           </label>{" "}
           <progress id="ai-progress" max={1} value={status.progress} />
         </p>
@@ -63,8 +67,8 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
       return (
         <p className="ai-status" data-testid="ai-status" data-state="ready">
           {mode === "simulator" ? (
-            <button type="button" onClick={() => ai.onSwitch("llm")}>
-              Switch to AI Warden
+            <button type="button" onClick={() => ai.onSwitch("llm")} title={AI_NOTE}>
+              Switch to AI Warden [{AI_EXPERIMENTAL}]
             </button>
           ) : (
             <button type="button" onClick={() => ai.onSwitch("simulator")}>
