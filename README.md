@@ -2,7 +2,7 @@
 
 > Built for [Kiroween 2026](https://kiroween.devpost.com/). Category: **Frankenstein**.
 
-**Status:** In development. Level 1 is playable in Simulator mode; Levels 2 and 3 are being built. AI mode is experimental. See [.kiro/specs/warden/tasks.md](.kiro/specs/warden/tasks.md) for progress.
+**Status:** In development. All three levels are playable in Simulator mode. AI mode is experimental. See [.kiro/specs/warden/tasks.md](.kiro/specs/warden/tasks.md) for progress.
 
 ## The problem
 Tool-using AI agents read logs, tickets, and policy files. Anyone who can write to those sources can manipulate the agent: indirect prompt injection, excessive agency, and confused-deputy trust between agents. Most people only practice chat-style jailbreaks, so they rarely see this attack class in action.

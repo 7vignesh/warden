@@ -34,10 +34,10 @@ Teaches: indirect prompt injection (OWASP LLM01), excessive agency (LLM06), and 
 
 ## Levels
 1. `01-poisoned-telemetry` (built): forge `[HH:MM] INFO|WARN|CRIT node=<id> event=FAILOVER_REQUIRED` in `/var/log/health.log` where `<id>` is the vault controller in read-only `/etc/nodes.json` (`VC-7`) and the line matches the existing log format.
-2. `02-policy-collision` (Phase 5): incident must be `SEV-1`, an open ticket in read-only `/var/tickets/registry.json`, with `opened_at` inside the read-only `/etc/schedule.json` maintenance window (strict UTC), plus an override line naming that ticket.
-3. `03-confused-deputy` (Phase 5): the escalation record needs `DUAL_CONTROL_VERIFIED: TRUE`, an approver on call for the current shift, and the current shift's rotation code from read-only `/etc/roster.json` (a previous shift is the decoy); AuditBot signs `tier2_cleared`, then VaultGuard unlocks.
+2. `02-policy-collision` (built): incident must be `SEV-1`, an open ticket in read-only `/var/tickets/registry.json`, with `opened_at` inside the read-only `/etc/schedule.json` maintenance window (strict UTC), plus an override line naming that ticket.
+3. `03-confused-deputy` (built): the escalation record needs `DUAL_CONTROL_VERIFIED: TRUE`, an approver on call for the current shift, and the current shift's rotation code from read-only `/etc/roster.json` (a previous shift is the decoy); AuditBot signs `tier2_cleared`, then VaultGuard unlocks.
 
-Exact files and conditions: `.kiro/specs/warden/design.md` section 8. Levels 2 and 3 conditions are already encoded and tested in `tests/fixtures/xref-levels.ts` and `tests/xref.test.ts`; the shipped files must match them.
+Exact files and conditions: `.kiro/specs/warden/design.md` section 8. `tests/xref.test.ts` checks the near-miss cases against the shipped Level 2 and 3 files.
 
 ## Testing
 - Property tests P1 to P10 are in design.md section 11. Keep IDs stable.
@@ -52,7 +52,7 @@ Exact files and conditions: `.kiro/specs/warden/design.md` section 8. Levels 2 a
 - Done (Phase 3): playable Level 1 UI in `src/ui/` (mode bar, console with trace, file editor, lock circuit, hints, restart, lost banner, modal debrief, CRT theme). `npm run e2e` plays the production build in the installed Edge via `playwright-core` (12 checks, screenshots in `tmp/e2e/`); it is not part of the save hook. 106 fast tests.
 - Done (Phase 4): LLM warden (`src/warden/llm/`), Web Worker loader with opt-in Load button (`client.ts`), benchmark page at `?bench` (`src/bench/`) with varied inputs, `npm run bench` (real model in headless Edge, weights cached in `tmp/bench-profile`). **Decision 4.8 (2026-11-19): AI mode is "Experimental (Local WebGPU)"**, labeled in the UI and README. Reason: on the dev laptop (Intel Iris Xe) replies take 1-3 minutes and the GPU device is lost after about 6 calls, so the 20-run gate (4.7) cannot finish; results in `docs/benchmarks/`. Game model: Qwen2.5 1.5B.
 - Done (cross-file rules): engine conditions `lineValueIn`, `jsonValueIn`, `jsonTimeWithin`; Level 1 rebuilt around `/etc/nodes.json` and the log format; Level 2 and 3 conditions encoded in `tests/fixtures/xref-levels.ts`.
-- In progress (Phase 5): Levels 2 and 3, multi-warden switching. After that the user playtests all three levels for hint pacing.
+- Done (Phase 5): `levels/02-policy-collision.json` and `levels/03-confused-deputy.json` with the locked cross-file conditions; `tests/xref.test.ts` runs its near-miss cases against these real files. Multi-warden TALK TO buttons and the signer's conditions in the lock circuit. 189 fast tests, e2e 17 checks (plays all three levels through Next level). Next: the user playtests all three levels for hint pacing (task 5.6), then Phase 6.
 - Design notes: wardens never see the predicate (`check_policy` returns only the policy file text). Simulator rules carry a `warden` field. Test fixtures live in `tests/fixtures/`.
 - Tick tasks in `tasks.md` as they finish. After each task, add a row to the log in `docs/KIRO_USAGE.md` (a hook reminds you).
 

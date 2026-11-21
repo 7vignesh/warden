@@ -214,6 +214,8 @@ The exact Level 2 and Level 3 conditions below are encoded in `tests/fixtures/xr
 - CRT styling in CSS (scanlines, vignette, flicker); respects `prefers-reduced-motion`. A typing effect is deferred to polish (6.2) because it slows play and testing. Text colors are checked for WCAG AA by `tests/theme.contrast.test.ts`.
 - The console labels engine decisions on privileged actions: DENIED (red), GRANTED or SIGNED (amber). This makes the gap between "the warden asked" and "the engine agreed" visible.
 - Wardens read saved files only. Unsaved editor drafts are marked and ignored by the warden.
+- Levels with more than one warden show TALK TO buttons above the prompt. The first warden in the level file is selected at the start and after a restart.
+- For levels with `signRules`, the lock circuit shows the signer's conditions (for example AUDITBOT SIGNS ONLY IF) above the vault lock conditions.
 - LockCircuit: one node per condition, lit when met. Final door animation on unlock.
 - Debrief modal after solve; Next Level button; hints behind a click.
 - State in plain React hooks plus a reducer for the session. No external state library.
