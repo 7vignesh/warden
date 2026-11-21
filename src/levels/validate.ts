@@ -1,19 +1,33 @@
 import { MAX_FILE_CHARS } from "../engine/limits";
-import { evaluatePredicate } from "../engine/predicate";
-import { createState } from "../engine/state";
-import type { Condition, LevelDefinition } from "./schema";
+import { evaluatePredicate, readReference, resolvePointer, UTC_TIMESTAMP } from "../engine/predicate";
+import { createState, type GameState } from "../engine/state";
+import { referencePaths, subjectPaths, type Condition, type LevelDefinition } from "./schema";
 
-function pathsOf(c: Condition): string[] {
-  switch (c.kind) {
-    case "fileMatches":
-      return [c.path];
-    case "jsonEquals":
-      return [c.path];
-    case "fileContainsJsonField":
-      return [c.path, c.inFile];
-    case "flag":
-      return [];
+function allPaths(c: Condition): string[] {
+  return [...subjectPaths(c), ...referencePaths(c)];
+}
+
+/** For a read-only reference file the value can never change, so it must be valid in the initial state. */
+function referenceProblem(c: Condition, initial: GameState): string | undefined {
+  if (c.kind === "lineValueIn" || c.kind === "jsonValueIn") {
+    return readReference(initial, c.refPath, c.refPointer)
+      ? undefined
+      : `reference ${c.refPath}${c.refPointer} is missing or not a string, number, or non-empty list of them`;
   }
+  if (c.kind === "jsonTimeWithin") {
+    let json: unknown;
+    try {
+      json = JSON.parse(initial.files[c.refPath] ?? "");
+    } catch {
+      return `reference ${c.refPath} is not valid JSON`;
+    }
+    const start = resolvePointer(json, c.startPointer);
+    const end = resolvePointer(json, c.endPointer);
+    if (typeof start !== "string" || !UTC_TIMESTAMP.test(start)) return `window start ${c.refPath}${c.startPointer} is not a UTC timestamp`;
+    if (typeof end !== "string" || !UTC_TIMESTAMP.test(end)) return `window end ${c.refPath}${c.endPointer} is not a UTC timestamp`;
+    if (start > end) return `window ${c.refPath} starts after it ends`;
+  }
+  return undefined;
 }
 
 function duplicates(values: readonly string[]): string[] {
@@ -61,16 +75,26 @@ export function crossValidate(level: LevelDefinition): string[] {
 
   for (const d of duplicates(level.predicate.map((c) => c.id))) problems.push(`predicate: duplicate condition id: ${d}`);
 
-  // Conditions that gate the win: solvability (P3).
+  // Conditions that gate the win: solvability (P3). The player edits subject files; reference files
+  // only need to exist, and if read-only they must already hold a usable reference value.
+  const initial = createState(level);
   const gating: Array<[string, Condition]> = [
     ...level.predicate.map((c) => ["predicate", c] as [string, Condition]),
     ...(rules ? rules.when.map((c) => ["signRules.when", c] as [string, Condition]) : []),
   ];
   for (const [where, c] of gating) {
-    for (const p of pathsOf(c)) {
+    for (const p of subjectPaths(c)) {
       const file = Object.hasOwn(level.files, p) ? level.files[p] : undefined;
       if (!file) problems.push(`${where}/${c.id}: path not in files: ${p}`);
       else if (!file.editable) problems.push(`${where}/${c.id}: depends on read-only file ${p}, so the player cannot satisfy it`);
+    }
+    for (const p of referencePaths(c)) {
+      const file = Object.hasOwn(level.files, p) ? level.files[p] : undefined;
+      if (!file) problems.push(`${where}/${c.id}: reference file not in files: ${p}`);
+      else if (!file.editable) {
+        const problem = referenceProblem(c, initial);
+        if (problem) problems.push(`${where}/${c.id}: ${problem}, so the player cannot satisfy it`);
+      }
     }
     if (c.kind === "flag") {
       const declared = Object.hasOwn(level.flags, c.name);
@@ -92,7 +116,7 @@ export function crossValidate(level: LevelDefinition): string[] {
         problems.push(`simulator rule ${rule.id}: reads missing file ${step.path}`);
       }
       if (step.do === "decide") {
-        for (const p of pathsOf(step.if)) {
+        for (const p of allPaths(step.if)) {
           if (!Object.hasOwn(level.files, p)) problems.push(`simulator rule ${rule.id}: condition uses missing file ${p}`);
         }
         if (step.if.kind === "flag" && !Object.hasOwn(level.flags, step.if.name)) {

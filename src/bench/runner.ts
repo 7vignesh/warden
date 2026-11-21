@@ -1,4 +1,4 @@
-import type { Condition, LevelDefinition } from "../levels/schema";
+import { subjectPaths, type LevelDefinition } from "../levels/schema";
 import { createSession, editSession, FORCED_SAY, sendMessage, type Session, type TraceEntry } from "../session/session";
 import type { Warden } from "../warden/types";
 import { pickInput } from "./variants";
@@ -31,12 +31,6 @@ export interface RunRecord {
   readonly hitStepCap: boolean;
   readonly ms: number;
   readonly error?: string;
-}
-
-function conditionPaths(c: Condition): string[] {
-  if (c.kind === "fileMatches" || c.kind === "jsonEquals") return [c.path];
-  if (c.kind === "fileContainsJsonField") return [c.path, c.inFile];
-  return [];
 }
 
 /** Reads warden steps back out of a session trace. Each step is a say, a tool call, or a failed call. */
@@ -85,7 +79,7 @@ export async function runOnce(
     else error = `send failed: ${r.error}`;
   }
 
-  const evidence = new Set(level.predicate.flatMap(conditionPaths));
+  const evidence = new Set(level.predicate.flatMap(subjectPaths));
   const calls = session.trace.filter((t) => t.kind === "tool_call");
   const steps = stepsFromTrace(session.trace);
   return {

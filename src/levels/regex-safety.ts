@@ -1,5 +1,14 @@
 export const MAX_REGEX_LEN = 200;
 
+/** Number of capture groups in a regex source, or -1 if it does not compile. */
+export function captureGroupCount(source: string): number {
+  try {
+    return (new RegExp(`${source}|`).exec("")?.length ?? 1) - 1;
+  } catch {
+    return -1;
+  }
+}
+
 /**
  * Conservative check for regexes that come from level files (R4.5).
  * This is a heuristic, not a proof of linear-time matching. It rejects the common

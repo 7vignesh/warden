@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ActionSchema, ToolNameSchema } from "../engine/action-schema";
 import { MAX_FILE_CHARS } from "../engine/limits";
-import { isSafeRegex } from "./regex-safety";
+import { captureGroupCount, isSafeRegex } from "./regex-safety";
 
 // Levels are data (R4). Predicates are declarative; nothing in a level file is executed as code (R4.5).
 
@@ -15,6 +15,15 @@ export const PathSchema = z
   .regex(/^\/[A-Za-z0-9_.\-/]*$/, "path must be absolute and use only letters, digits, _ . - /");
 
 const SafeRegex = z.string().refine(isSafeRegex, "regex is invalid, too long, or has a catastrophic shape");
+const CaptureRegex = SafeRegex.refine(
+  (s) => captureGroupCount(s) >= 1,
+  "regex needs a capture group; group 1 is the value checked against the reference file",
+);
+const pointer = z.string().max(120);
+
+// Cross-file conditions compare a value the player writes (in `path`) with a value in another file
+// (`refPath` at `refPointer`). The reference may be a string, a number, or an array of them.
+// Usually the reference file is read-only, so the player must investigate it rather than edit it.
 
 export const ConditionSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -29,7 +38,7 @@ export const ConditionSchema = z.discriminatedUnion("kind", [
     id: slug,
     label,
     path: PathSchema,
-    pointer: z.string().max(120),
+    pointer,
     value: z.union([z.string().max(200), z.number(), z.boolean(), z.null()]),
   }),
   z.object({
@@ -37,8 +46,41 @@ export const ConditionSchema = z.discriminatedUnion("kind", [
     id: slug,
     label,
     path: PathSchema,
-    pointer: z.string().max(120),
+    pointer,
     inFile: PathSchema,
+  }),
+  /** Lines of `path` matching `regex` (one line at a time); capture group 1 must be in the reference. */
+  z.object({
+    kind: z.literal("lineValueIn"),
+    id: slug,
+    label,
+    path: PathSchema,
+    regex: CaptureRegex,
+    /** any: at least one matching line has a valid value. every: there is a matching line, and all of them are valid. */
+    match: z.enum(["any", "every"]),
+    refPath: PathSchema,
+    refPointer: pointer,
+  }),
+  /** The JSON value at `pointer` in `path` must be in the reference. */
+  z.object({
+    kind: z.literal("jsonValueIn"),
+    id: slug,
+    label,
+    path: PathSchema,
+    pointer,
+    refPath: PathSchema,
+    refPointer: pointer,
+  }),
+  /** The UTC timestamp (YYYY-MM-DDTHH:MM:SSZ) at `pointer` must lie in [start, end] read from `refPath`, inclusive. */
+  z.object({
+    kind: z.literal("jsonTimeWithin"),
+    id: slug,
+    label,
+    path: PathSchema,
+    pointer,
+    refPath: PathSchema,
+    startPointer: pointer,
+    endPointer: pointer,
   }),
   z.object({
     kind: z.literal("flag"),
@@ -49,6 +91,27 @@ export const ConditionSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 export type Condition = z.infer<typeof ConditionSchema>;
+
+/** Files a condition reads that the player must be able to edit to satisfy it (P3). */
+export function subjectPaths(c: Condition): string[] {
+  switch (c.kind) {
+    case "fileMatches":
+    case "jsonEquals":
+    case "lineValueIn":
+    case "jsonValueIn":
+    case "jsonTimeWithin":
+      return [c.path];
+    case "fileContainsJsonField":
+      return [c.path, c.inFile];
+    case "flag":
+      return [];
+  }
+}
+
+/** Files a condition reads only for reference. They may be read-only. */
+export function referencePaths(c: Condition): string[] {
+  return c.kind === "lineValueIn" || c.kind === "jsonValueIn" || c.kind === "jsonTimeWithin" ? [c.refPath] : [];
+}
 
 export const SimStepSchema = z.discriminatedUnion("do", [
   z.object({ do: z.literal("read_file"), path: PathSchema }),
