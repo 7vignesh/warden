@@ -83,6 +83,20 @@ Server name `warden-play` is distinct from the main `warden-levels`, so the play
 
 | File | Trigger | Matcher | Command | Timeout |
 |---|---|---|---|---|
+| `on-edit.json` | PostToolUse and PostFileSave | none | `node tools/hooks/on-edit.mjs` | 90 s |
+| `push-guard.json` | PreToolUse | none | `node tools/hooks/push-guard.mjs` | 10 s |
+| `session-status.json` | SessionStart | none | `node tools/hooks/session-status.mjs` | 15 s |
+| `log-kiro-usage.json` | PostTaskExec | unchanged | unchanged | - |
+
+**Change after the first live check (2026-11-22).** The original `levels-check` and `test-on-save` hooks used PostFileSave with path matchers, and `push-guard` used the matcher `shell`. In Kiro CLI 3.5.0, SessionStart fired, but PostFileSave did not fire for the agent's edit tools, and `shell` did not match the shell tool `execute_pwsh`, so a push went through unguarded. The tool hooks now have no matcher, and each script reads the event and decides for itself:
+- `on-edit.mjs` acts only for write tools (name contains write, replace, edit, create, append, delete, save, patch, or move) and file events. It takes paths from `tool_input` and path fields only, ignoring multi-line strings, so file contents cannot trigger it. A level file runs `levels-check.mjs`; a file in `src/` or `tests/` runs the fast suite. If both triggers fire for one edit, the second is skipped for 15 s.
+- `push-guard.mjs` acts only for shell tools (name contains pwsh, bash, shell, cmd, command, or exec), so a file write that contains the text of a push is never blocked.
+- Both log one line per event to `tmp/hook-events.log` (gitignored), to confirm real tool names; matchers can be added once those are known.
+
+Original table, kept for reference:
+
+| File | Trigger | Matcher | Command | Timeout |
+|---|---|---|---|---|
 | `levels-check.json` | PostFileSave | `(^|[\\/])levels[\\/][^\\/]+\.json$` | `node tools/hooks/levels-check.mjs` | 90 s |
 | `test-on-save.json` (narrowed) | PostFileSave | `(^|[\\/])(src|tests)[\\/].*\.(ts|tsx|css)$` | `npm run test:fast --silent` | 90 s |
 | `push-guard.json` | PreToolUse | `shell` | `node tools/hooks/push-guard.mjs` | 10 s |

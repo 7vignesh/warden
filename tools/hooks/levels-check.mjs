@@ -1,4 +1,5 @@
-// Kiro hook (PostFileSave on levels/*.json): validate every level and run the level tests.
+// Level check: validate every level and run the level tests.
+// Run by tools/hooks/on-edit.mjs when a level file is edited, or by hand: node tools/hooks/levels-check.mjs
 // Exit 0 prints one summary line (added to the agent's context). Any failure exits 1 with the
 // problems on stderr, so the agent sees what broke.
 import { spawnSync } from "node:child_process";

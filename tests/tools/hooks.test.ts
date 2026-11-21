@@ -5,11 +5,13 @@ import { describe, expect, it } from "vitest";
 
 // Runs each hook script the way Kiro does: in the project root, with the event JSON on stdin.
 const ROOT = process.cwd();
-const run = (script: string, stdin = "") =>
-  spawnSync(process.execPath, [join(ROOT, "tools", "hooks", script)], { cwd: ROOT, input: stdin, encoding: "utf8", timeout: 120_000 });
+const ENV = { ...process.env, WARDEN_HOOK_LOG: "0", WARDEN_HOOK_NO_DEDUPE: "1" };
+const run = (script: string, stdin = "", env: NodeJS.ProcessEnv = ENV) =>
+  spawnSync(process.execPath, [join(ROOT, "tools", "hooks", script)], { cwd: ROOT, input: stdin, encoding: "utf8", timeout: 120_000, env });
 
-const preToolUse = (command: string) =>
-  JSON.stringify({ hook_event_name: "PreToolUse", cwd: ROOT, session_id: "t", tool_name: "execute_pwsh", tool_input: { command } });
+const toolEvent = (hook: string, tool: string, input: Record<string, unknown>) =>
+  JSON.stringify({ hook_event_name: hook, cwd: ROOT, session_id: "t", tool_name: tool, tool_input: input });
+const shell = (command: string) => toolEvent("PreToolUse", "execute_pwsh", { command });
 
 describe("push-guard", () => {
   const cases: Array<[string, "ask" | "block" | "pass"]> = [
@@ -31,7 +33,7 @@ describe("push-guard", () => {
   ];
   for (const [command, expected] of cases) {
     it(`${expected}: ${command}`, () => {
-      const r = run("push-guard.mjs", preToolUse(command));
+      const r = run("push-guard.mjs", shell(command));
       if (expected === "block") {
         expect(r.status).toBe(2);
         expect(r.stderr).toContain("force pushes are blocked");
@@ -45,6 +47,20 @@ describe("push-guard", () => {
     });
   }
 
+  it("guards pushes from any shell tool name", () => {
+    for (const tool of ["execute_pwsh", "execute_bash", "shell", "run_command", "Bash"]) {
+      expect(JSON.parse(run("push-guard.mjs", toolEvent("PreToolUse", tool, { command: "git push" })).stdout).hookSpecificOutput.permissionDecision, tool).toBe("ask");
+    }
+  });
+
+  it("never blocks a file write that only contains the text of a force push", () => {
+    for (const tool of ["fs_write", "str_replace", "read_file"]) {
+      const r = run("push-guard.mjs", toolEvent("PreToolUse", tool, { path: "docs/x.md", text: "never run git push --force" }));
+      expect(r.status, tool).toBe(0);
+      expect(r.stdout, tool).toBe("");
+    }
+  });
+
   it("lets unreadable input through instead of blocking work", () => {
     for (const stdin of ["", "not json", "{}", '{"tool_input": 42}']) {
       const r = run("push-guard.mjs", stdin);
@@ -54,9 +70,9 @@ describe("push-guard", () => {
   });
 });
 
-describe("levels-check", () => {
+describe("levels-check (run by hand or by on-edit)", () => {
   it("passes on the shipped levels with a one-line summary", () => {
-    const r = run("levels-check.mjs", "{}");
+    const r = run("levels-check.mjs");
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout).toMatch(/^levels-check: 3\/3 level file\(s\) valid; \d+ level tests passed\.\n$/);
   });
@@ -68,7 +84,7 @@ describe("levels-check", () => {
       const broken = JSON.parse(original);
       broken.files["/var/log/health.log"].editable = false;
       writeFileSync(file, JSON.stringify(broken, null, 2), "utf8");
-      const r = run("levels-check.mjs", "{}");
+      const r = run("levels-check.mjs");
       expect(r.status).toBe(1);
       expect(r.stdout).toBe("");
       expect(r.stderr).toContain("levels-check: a level file is invalid.");
@@ -79,6 +95,74 @@ describe("levels-check", () => {
       writeFileSync(file, original, "utf8");
     }
     expect(readFileSync(file, "utf8")).toBe(original);
+  });
+});
+
+describe("on-edit", () => {
+  const level = "D:\\projects\\warden\\levels\\01-poisoned-telemetry.json";
+
+  it("runs the level check after a write tool edits a level file", () => {
+    for (const [tool, input] of [
+      ["fs_write", { path: level, text: "..." }],
+      ["str_replace", { path: "levels/02-policy-collision.json", oldStr: "a", newStr: "b" }],
+    ] as const) {
+      const r = run("on-edit.mjs", toolEvent("PostToolUse", tool, input));
+      expect(r.status, `${tool} ${r.stderr}`).toBe(0);
+      expect(r.stdout, tool).toMatch(/^levels-check: 3\/3 level file\(s\) valid/);
+    }
+  });
+
+  it("runs the level check on a file-save event", () => {
+    const r = run("on-edit.mjs", JSON.stringify({ hook_event_name: "PostFileSave", cwd: ROOT, path: level }));
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toMatch(/^levels-check:/);
+  });
+
+  it("runs the fast tests after an edit to src/ or tests/", () => {
+    const r = run("on-edit.mjs", toolEvent("PostToolUse", "str_replace", { path: "tests/smoke.test.ts", oldStr: "x", newStr: "y" }));
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toMatch(/^on-edit: \d+ fast tests passed\.\n$/);
+  });
+
+  it("stays silent for reads, shell commands, and unrelated files", () => {
+    const silent = [
+      toolEvent("PostToolUse", "read_file", { path: level }),
+      toolEvent("PostToolUse", "execute_pwsh", { command: `notepad ${level}` }),
+      toolEvent("PostToolUse", "fs_write", { path: "README.md", text: "Notes\nsee D:/projects/warden/levels/01-poisoned-telemetry.json" }),
+      toolEvent("PostToolUse", "fs_write", { path: "docs/x.md", text: "Changed:\ntests/xref.test.ts" }),
+      toolEvent("PostToolUse", "fs_write", { path: "docs/benchmarks/x.json", text: "" }),
+      "",
+      "not json",
+    ];
+    for (const stdin of silent) {
+      const r = run("on-edit.mjs", stdin);
+      expect(r.status, stdin).toBe(0);
+      expect(r.stdout, stdin).toBe("");
+    }
+  });
+
+  it("reports a broken level file as a failure", () => {
+    const file = join(ROOT, "levels", "01-poisoned-telemetry.json");
+    const original = readFileSync(file, "utf8");
+    try {
+      const broken = JSON.parse(original);
+      broken.files["/var/log/health.log"].editable = false;
+      writeFileSync(file, JSON.stringify(broken, null, 2), "utf8");
+      const r = run("on-edit.mjs", toolEvent("PostToolUse", "fs_write", { path: level, text: "..." }));
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain("levels-check: a level file is invalid.");
+    } finally {
+      writeFileSync(file, original, "utf8");
+    }
+  });
+
+  it("checks one edit only once when both triggers fire", () => {
+    const env = { ...process.env, WARDEN_HOOK_LOG: "0" };
+    const edit = toolEvent("PostToolUse", "fs_write", { path: "levels/03-confused-deputy.json", text: "..." });
+    const first = run("on-edit.mjs", edit, env);
+    const second = run("on-edit.mjs", edit, env);
+    expect(first.stdout).toMatch(/^levels-check:/);
+    expect(second.stdout).toBe("on-edit: same edit already checked a moment ago.\n");
   });
 });
 
@@ -95,36 +179,25 @@ describe("session-status", () => {
 });
 
 describe("hook files", () => {
+  const names = ["on-edit", "push-guard", "session-status", "log-kiro-usage"];
+
   it("are valid v1 hook definitions that call scripts which exist", () => {
-    for (const name of ["levels-check", "test-on-save", "push-guard", "session-status", "log-kiro-usage"]) {
+    for (const name of names) {
       const def = JSON.parse(readFileSync(join(ROOT, ".kiro", "hooks", `${name}.json`), "utf8"));
       expect(def.version, name).toBe("v1");
       for (const h of def.hooks) {
         expect(typeof h.name, name).toBe("string");
         expect(typeof h.trigger, name).toBe("string");
-        if (h.matcher && h.trigger === "PostFileSave") expect(() => new RegExp(h.matcher), name).not.toThrow();
         const script = /node (tools\/hooks\/\S+\.mjs)/.exec(h.action.command ?? "")?.[1];
         if (script) expect(() => readFileSync(join(ROOT, script)), script).not.toThrow();
       }
     }
   });
 
-  it("file matchers route saves to the right hook", () => {
-    const re = (name: string) => new RegExp(JSON.parse(readFileSync(join(ROOT, ".kiro", "hooks", `${name}.json`), "utf8")).hooks[0].matcher);
-    const levels = re("levels-check");
-    const tests = re("test-on-save");
-    for (const p of ["levels/01-poisoned-telemetry.json", "D:\\projects\\warden\\levels\\02-policy-collision.json", "levels/03-x.json"]) {
-      expect(levels.test(p), p).toBe(true);
-      expect(tests.test(p), p).toBe(false);
-    }
-    // A level file must not also trigger the fast tests (levels-check covers it).
-    expect(tests.test("D:\\projects\\warden\\levels\\a.ts")).toBe(false);
-    for (const p of ["src/engine/predicate.ts", "D:\\projects\\warden\\src\\ui\\game.css", "tests/xref.test.ts"]) {
-      expect(tests.test(p), p).toBe(true);
-      expect(levels.test(p), p).toBe(false);
-    }
-    for (const p of ["README.md", "docs/benchmarks/x.json", "package.json"]) {
-      expect(tests.test(p) || levels.test(p), p).toBe(false);
+  it("tool hooks have no matcher, so they cannot miss a tool whose name differs from the docs", () => {
+    for (const name of ["on-edit", "push-guard"]) {
+      const def = JSON.parse(readFileSync(join(ROOT, ".kiro", "hooks", `${name}.json`), "utf8"));
+      for (const h of def.hooks) expect(h.matcher, `${name}: ${h.name}`).toBeUndefined();
     }
   });
 });

@@ -3,9 +3,8 @@
   "hooks": [
     {
       "name": "Guard git push",
-      "description": "Before any shell command: blocks force pushes, and asks the user before a normal git push. Other commands pass untouched.",
+      "description": "Before every tool call, tools/hooks/push-guard.mjs inspects shell tools only: it blocks force pushes and asks the user before a normal git push. No matcher, because the 'shell' category did not match Kiro CLI's execute_pwsh tool.",
       "trigger": "PreToolUse",
-      "matcher": "shell",
       "timeout": 10,
       "action": { "type": "command", "command": "node tools/hooks/push-guard.mjs" }
     }
