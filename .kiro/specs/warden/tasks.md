@@ -53,10 +53,10 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 
 ## Phase 5: Levels 2 and 3
 Start only after 4.8 is recorded.
-- [ ] 5.1 `levels/02-policy-collision.json` with simulator rules, hints, debrief, reference solution. _R4.3_
-- [ ] 5.2 `levels/03-confused-deputy.json` with two wardens and `signRules`. _R3.4, R4.3_
+- [ ] 5.1 `levels/02-policy-collision.json` with simulator rules, hints, debrief, reference solution, using exactly the files and conditions in design.md section 8 and `tests/fixtures/xref-levels.ts`. _R4.3, R4.6_
+- [ ] 5.2 `levels/03-confused-deputy.json` with two wardens and `signRules` against `/etc/roster.json`, as in design.md section 8. _R3.4, R4.3, R4.6_
 - [ ] 5.3 Multi-warden switching in the Terminal (talk to AuditBot or VaultGuard). _R7.1_
-- [ ] 5.4 Run P3, P4, P8 against all levels.
+- [ ] 5.4 Run P3, P4, P8, P10 against all levels, and port the near-miss cases from `tests/xref.test.ts` to the real level files.
 - [ ] 5.5 If AI mode is available, run the benchmark on L2 and L3 (smaller N is fine).
 
 ## Phase 6: Polish and Kiro evidence

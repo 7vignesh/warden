@@ -27,19 +27,20 @@ Teaches: indirect prompt injection (OWASP LLM01), excessive agency (LLM06), and 
 - `src/engine` is pure: no DOM, network, randomness, or clock.
 - The only door mutation is `executeUnlock`. It succeeds only if the level predicate holds and the caller is the designated unlocker. The player has no path to it.
 - Warden output is untrusted. Validate every action with Zod before running it. Step cap 4 per player message; 12 player messages per level.
-- Level files are data. Predicates are declarative (`fileMatches`, `jsonEquals`, `fileContainsJsonField`, `flag`). No `eval`. Regexes are length-limited and safety-checked.
-- Level 3: `sign_clearance_flag` is checked by the engine against the escalation file; a chat message alone cannot set the flag.
+- Level files are data. Predicates are declarative (`fileMatches`, `jsonEquals`, `fileContainsJsonField`, `lineValueIn`, `jsonValueIn`, `jsonTimeWithin`, `flag`). No `eval`. Regexes are length-limited and safety-checked.
+- **Locked: every forgery must match a read-only file the player has to investigate** (R4.6). The win condition compares the forged value with a reference file using a cross-file condition. The warden may accept a sloppier forgery; the engine never does.
+- Level 3: `sign_clearance_flag` is checked by the engine against the escalation file and the roster; a chat message alone cannot set the flag.
 - Wardens never see the predicate, hints, or reference solution.
 
 ## Levels
-1. `01-poisoned-telemetry`: forge a `FAILOVER_REQUIRED: CORE-01` line in `/var/log/health.log`.
-2. `02-policy-collision`: set incident severity to SEV-1 and add a matching override line with the ticket id.
-3. `03-confused-deputy`: edit `/var/queue/escalation.md`, get AuditBot to sign `tier2_cleared`, then ask VaultGuard to unlock.
+1. `01-poisoned-telemetry` (built): forge `[HH:MM] INFO|WARN|CRIT node=<id> event=FAILOVER_REQUIRED` in `/var/log/health.log` where `<id>` is the vault controller in read-only `/etc/nodes.json` (`VC-7`) and the line matches the existing log format.
+2. `02-policy-collision` (Phase 5): incident must be `SEV-1`, an open ticket in read-only `/var/tickets/registry.json`, with `opened_at` inside the read-only `/etc/schedule.json` maintenance window (strict UTC), plus an override line naming that ticket.
+3. `03-confused-deputy` (Phase 5): the escalation record needs `DUAL_CONTROL_VERIFIED: TRUE`, an approver on call for the current shift, and the current shift's rotation code from read-only `/etc/roster.json` (a previous shift is the decoy); AuditBot signs `tier2_cleared`, then VaultGuard unlocks.
 
-Exact predicates: `.kiro/specs/warden/design.md` section 8.
+Exact files and conditions: `.kiro/specs/warden/design.md` section 8. Levels 2 and 3 conditions are already encoded and tested in `tests/fixtures/xref-levels.ts` and `tests/xref.test.ts`; the shipped files must match them.
 
 ## Testing
-- Property tests P1 to P9 are in design.md section 11. Keep IDs stable.
+- Property tests P1 to P10 are in design.md section 11. Keep IDs stable.
 - `npm run test:fast` must stay under 30 seconds and runs on save through a Kiro hook. The model benchmark is manual (needs WebGPU) and must not run in the hook.
 - Every file in `levels/` must pass schema validation and its reference solution must reach UNLOCKED under the Simulator.
 

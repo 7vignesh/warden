@@ -44,6 +44,7 @@ Category: Frankenstein. Stitches an in-browser WebGPU LLM, a deterministic rule 
    - L3 Confused Deputy (two wardens, delegated trust).
 4. THE Level schema SHALL support: filesystem, editable paths, wardens with tools and persona, predicate, simulator rules, reference solution, hints, and debrief text.
 5. THE Predicate language SHALL be declarative (no arbitrary code execution from level files).
+6. EVERY level's win condition SHALL require the forged data to be consistent with at least one read-only file the player must investigate (a valid id, a time window, or a matching record). THE Engine SHALL verify this deterministically with cross-file conditions. THE Engine SHALL NOT accept a value that only looks right but does not match the reference.
 
 ## R5. Warden modes
 1. WHEN the app loads, THE System SHALL start in Simulator mode with no waiting.
