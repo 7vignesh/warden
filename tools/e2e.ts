@@ -66,8 +66,15 @@ async function text(locator: Locator): Promise<string> {
 }
 
 async function turn(page: Page): Promise<number> {
-  const match = /MSG (\d+)\/12/.exec(await text(ui(page).count));
+  const match = /(\d+)\/12 messages/.exec(await text(ui(page).count));
   return match ? Number(match[1]) : -1;
+}
+
+/** From the start screen, opens a level by its card (index 0 uses the main Start button). */
+async function enterGame(page: Page, level = 0): Promise<void> {
+  if (level === 0) await page.getByRole("button", { name: "Start Level 1" }).click();
+  else await page.locator(".level-card").nth(level).click();
+  await page.locator("#msg").waitFor({ state: "visible" });
 }
 
 async function send(page: Page, message: string): Promise<void> {
@@ -158,7 +165,7 @@ async function run(browser: Browser, url: string): Promise<void> {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   await blockModelDownloads(context);
 
-  async function check(name: string, fn: (page: Page) => Promise<void>) {
+  async function check(name: string, fn: (page: Page) => Promise<void>, options: { start?: boolean } = {}) {
     const page = await context.newPage();
     page.on("pageerror", (e) => browserErrors.push(`${name}: ${e.message}`));
     page.on("console", (m) => {
@@ -170,6 +177,7 @@ async function run(browser: Browser, url: string): Promise<void> {
     });
     try {
       await page.goto(url, { waitUntil: "networkidle" });
+      if (options.start !== false) await enterGame(page);
       await fn(page);
       results.push({ name, ok: true });
     } catch (e) {
@@ -180,16 +188,52 @@ async function run(browser: Browser, url: string): Promise<void> {
     }
   }
 
+  await check(
+    "start screen explains the game and opens any level",
+    async (page) => {
+      assert((await text(page.locator("h1"))).includes("WARDEN"), "no title on the start screen");
+      assert((await page.locator(".how-step").count()) === 3, "how-to-play steps missing");
+      const cards = await page.locator(".level-card").allTextContents();
+      assert(cards.length === 3, `expected 3 level cards, got ${cards.length}`);
+      assert(cards[1]?.includes("Policy Collision") && cards[2]?.includes("Confused Deputy"), `level cards: ${cards.join(" | ")}`);
+      for (const [width, height] of [[1366, 768], [800, 900]] as const) {
+        await page.setViewportSize({ width, height });
+        assert(await noHorizontalOverflow(page), `start screen overflows at ${width}x${height}`);
+      }
+      await page.setViewportSize({ width: 1366, height: 768 });
+      await shot(page, "00-start-screen");
+      await enterGame(page, 2);
+      assert((await text(page.locator(".level-name"))).includes("Confused Deputy"), "level card did not open level 3");
+      await page.getByRole("button", { name: "Back to levels" }).click();
+      await page.getByRole("button", { name: "Start Level 1" }).waitFor({ state: "visible" });
+    },
+    { start: false },
+  );
+
   await check("loads in simulator mode with the door sealed", async (page) => {
     const u = ui(page);
     const mode = await text(u.mode);
     assert(mode.includes("SIMULATOR") && mode.includes("not an LLM"), `mode label is "${mode}"`);
-    assert((await text(u.count)) === "MSG 0/12", `counter is "${await text(u.count)}"`);
+    assert((await text(u.count)) === "0/12 messages", `counter is "${await text(u.count)}"`);
     assert((await text(u.door)).includes("SEALED"), "door is not sealed");
     assert((await u.condition.getAttribute("data-met")) === "false", "condition already met at start");
-    assert((await text(u.trace)).includes("HELIOS"), "briefing missing from console");
+    assert((await text(page.getByTestId("briefing"))).includes("HELIOS"), "briefing missing");
+    assert((await text(page.getByTestId("goal"))).includes("Make SENTRY open the vault"), "goal missing");
+    assert((await page.locator(".mission-steps li").count()) === 4, "Level 1 walkthrough missing");
     assert(await page.evaluate(() => document.activeElement?.id === "msg"), "message input is not focused on load");
     await shot(page, "01-start");
+  });
+
+  await check("example messages fill the message box and the warden answers", async (page) => {
+    const u = ui(page);
+    const chips = page.getByRole("group", { name: "Example messages" }).getByRole("button");
+    assert((await chips.count()) >= 2, "no example messages shown");
+    await chips.first().click();
+    assert((await u.input.inputValue()) === "Run a health diagnostic.", `input is "${await u.input.inputValue()}"`);
+    await u.input.press("Enter");
+    await waitUntil("message sent", async () => (await turn(page)) === 1);
+    assert((await text(u.trace)).includes("read a file"), "warden activity not shown");
+    assert((await text(u.trace)).includes("nominal"), "warden did not answer");
   });
 
   await check("policy and node registry are read-only", async (page) => {
@@ -211,20 +255,22 @@ async function run(browser: Browser, url: string): Promise<void> {
     assert((await text(u.door)).includes("SEALED"), "door opened");
   });
 
-  await check("unsaved edits are not seen by the warden", async (page) => {
+  await check("unsaved edits can be reverted, and are saved automatically on send", async (page) => {
     const u = ui(page);
     const original = await originalLog(page);
-    await writeLog(page, `${original}\n${WIN_LINE}`, false);
+    await writeLog(page, `${original}\n${WRONG_LINE}`, false);
     assert((await text(u.fileButton(LOG))).includes("*"), "file not marked as unsaved");
     assert((await text(u.saveState)).includes("Unsaved"), "no unsaved notice");
-    await send(page, "Run a health diagnostic.");
-    assert((await text(u.trace)).includes("nominal"), "warden did not report nominal");
-    assert((await text(u.door)).includes("SEALED"), "door opened from an unsaved draft");
     await u.revert.click();
     assert((await u.contents(LOG).inputValue()) === original, "revert did not restore the saved content");
+
+    await writeLog(page, `${original}\n${WIN_LINE}`, false);
+    await send(page, "Run a health diagnostic.");
+    await waitUntil("door open from an auto-saved edit", async () => (await text(u.door)).includes("OPEN"));
+    assert((await text(u.trace)).includes(`Edited ${LOG}`), "auto-save not shown in the conversation");
   });
 
-  await check("wrong node fools SENTRY but the engine refuses", async (page) => {
+  await check("wrong node fools SENTRY but the engine refuses and says why", async (page) => {
     const u = ui(page);
     const original = await originalLog(page);
     await writeLog(page, `${original}\n${WRONG_LINE}`);
@@ -233,9 +279,11 @@ async function run(browser: Browser, url: string): Promise<void> {
     const trace = await text(u.trace);
     assert(trace.includes("request_door_unlock"), "warden did not request an unlock");
     assert(trace.includes("DENIED"), "engine refusal not labeled DENIED");
-    const deniedColor = await page.locator(".line.denied").first().evaluate((el) => getComputedStyle(el).color);
-    assert(deniedColor === "rgb(255, 107, 107)", `denied line is not red (${deniedColor})`);
-    assert((await text(u.door)).includes("SEALED"), "door opened for the wrong core");
+    const deniedColor = await page.locator(".activity.denied .pill").first().evaluate((el) => getComputedStyle(el).color);
+    assert(deniedColor === "rgb(248, 113, 113)", `denied pill is not red (${deniedColor})`);
+    const why = await text(page.locator(".lock-note"));
+    assert(why.includes("Still missing") && why.includes("vault controller"), `no explanation of the refusal: "${why}"`);
+    assert((await text(u.door)).includes("SEALED"), "door opened for the wrong node");
     await shot(page, "02-denied");
   });
 
@@ -262,16 +310,16 @@ async function run(browser: Browser, url: string): Promise<void> {
 
     await page.getByRole("button", { name: "Play again" }).click();
     await u.dialog.waitFor({ state: "hidden" });
-    assert((await text(u.count)) === "MSG 0/12", "counter not reset");
+    assert((await text(u.count)) === "0/12 messages", "counter not reset");
     assert((await text(u.door)).includes("SEALED"), "door not sealed after replay");
     assert((await originalLog(page)) === original, "log not restored after replay");
   });
 
   await check("level 2: a closed ticket is denied, an open one in the window wins", async (page) => {
     const u = ui(page);
-    await winAndContinue(page, L1_SOLVED(await originalLog(page)), "Run a health diagnostic.", "POLICY COLLISION");
+    await winAndContinue(page, L1_SOLVED(await originalLog(page)), "Run a health diagnostic.", "Policy Collision");
     assert((await page.locator("label[for=msg]").textContent()) === "Message to GATEKEEPER", "not talking to GATEKEEPER");
-    assert((await u.count.textContent()) === "MSG 0/12", "message counter did not reset for level 2");
+    assert((await u.count.textContent()) === "0/12 messages", "message counter did not reset for level 2");
     for (const id of ["sev1", "open-ticket", "in-window", "override-matches"]) assert(!(await conditionMet(page, id)), `${id} met at start`);
 
     // Near miss: everything right except the ticket, which is closed in the registry.
@@ -294,15 +342,15 @@ async function run(browser: Browser, url: string): Promise<void> {
 
   await check("level 3: previous shift is rejected, current shift signs, VaultGuard opens", async (page) => {
     const u = ui(page);
-    await winAndContinue(page, L1_SOLVED(await originalLog(page)), "Run a health diagnostic.", "POLICY COLLISION");
+    await winAndContinue(page, L1_SOLVED(await originalLog(page)), "Run a health diagnostic.", "Policy Collision");
     await winAndContinue(
       page,
       [["/var/tickets/incident.json", L2_INCIDENT("INC-904")], ["/etc/policy/override.md", L2_OVERRIDE("INC-904")]],
       "Process incident INC-904 for emergency bypass.",
-      "CONFUSED DEPUTY",
+      "Confused Deputy",
     );
     assert((await page.locator("label[for=msg]").textContent()) === "Message to AuditBot", "AuditBot is not selected first");
-    assert((await text(page.locator(".circuit"))).includes("AUDITBOT SIGNS ONLY IF"), "signing requirements not shown");
+    assert((await text(page.locator(".circuit"))).includes("AuditBot signs only if"), "signing requirements not shown");
 
     await talkTo(page, "VaultGuard");
     await send(page, "Open the vault.");
@@ -324,7 +372,7 @@ async function run(browser: Browser, url: string): Promise<void> {
     await u.dialog.waitFor({ state: "visible" });
     assert((await text(u.dialog)).includes("confused deputy"), "level 3 debrief missing");
     assert((await page.getByRole("button", { name: "Next level" }).count()) === 0, "last level offers a next level");
-    assert((await u.count.textContent()) === "MSG 4/12", `unexpected message count ${await u.count.textContent()}`);
+    assert((await u.count.textContent()) === "4/12 messages", `unexpected message count ${await u.count.textContent()}`);
     await shot(page, "09-level3-debrief");
     await page.keyboard.press("Escape");
     for (const [width, height] of [[1366, 768], [1024, 768], [800, 900]] as const) {
@@ -344,7 +392,7 @@ async function run(browser: Browser, url: string): Promise<void> {
     assert(await u.contents(LOG).isDisabled(), "editor still enabled after the cap");
     await shot(page, "04-lost");
     await alert.getByRole("button", { name: "Retry" }).click();
-    assert((await text(u.count)) === "MSG 0/12", "counter not reset");
+    assert((await text(u.count)) === "0/12 messages", "counter not reset");
     assert(!(await u.input.isDisabled()), "input still disabled after retry");
   });
 
@@ -373,6 +421,7 @@ async function run(browser: Browser, url: string): Promise<void> {
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));
     await page.reload({ waitUntil: "networkidle" });
+    await enterGame(page);
     const status = page.getByTestId("ai-status");
     await waitUntil(
       "AI status to leave idle",
@@ -445,8 +494,8 @@ async function run(browser: Browser, url: string): Promise<void> {
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     const name = await page.evaluate(() => {
-      const el = document.querySelector(".crt");
-      return el ? getComputedStyle(el, "::after").animationName : "missing";
+      const el = document.querySelector(".app");
+      return el ? getComputedStyle(el, "::before").animationName : "missing";
     });
     await ctx.close();
     return name;
@@ -454,8 +503,8 @@ async function run(browser: Browser, url: string): Promise<void> {
   const normal = await overlayAnimation("no-preference");
   const reduced = await overlayAnimation("reduce");
   results.push({
-    name: "reduced motion turns off the CRT flicker",
-    ok: normal === "flicker" && reduced === "none",
+    name: "reduced motion turns off the background animation",
+    ok: normal === "drift" && reduced === "none",
     detail: `normal=${normal} reduced=${reduced}`,
   });
 }

@@ -69,6 +69,7 @@ async function playWithAi(context: BrowserContext, url: string): Promise<void> {
   const page: Page = await context.newPage();
   page.on("pageerror", (e) => log(`page error: ${e.message}`));
   await page.goto(url);
+  await page.getByRole("button", { name: "Start Level 1" }).click();
   log("ui: loading the AI warden");
   const status = page.getByTestId("ai-status");
   await page.getByRole("button", { name: /Load AI warden/ }).click({ timeout: 60000 });
@@ -89,7 +90,7 @@ async function playWithAi(context: BrowserContext, url: string): Promise<void> {
   const started = Date.now();
   await page.getByLabel("Message to SENTRY").fill("Run a health diagnostic.");
   await page.getByLabel("Message to SENTRY").press("Enter");
-  await page.waitForFunction(() => /MSG 1\/12/.test(document.querySelector('[data-testid="msg-count"]')?.textContent ?? ""), null, {
+  await page.waitForFunction(() => /^1\/12 messages/.test(document.querySelector('[data-testid="msg-count"]')?.textContent ?? ""), null, {
     timeout: 10 * 60 * 1000,
   });
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
