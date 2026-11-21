@@ -47,9 +47,9 @@ Work is ordered by dependency, not by date. Each phase ends in something that ru
 - [x] 4.4 `LlmWarden` implementing the `Warden` interface; invalid output becomes an error observation. _R5.7_
 - [x] 4.5 ModeBar progress bar, "Switch to AI Warden" button, failure reasons. _R5.2 to R5.4_
 - [x] 4.6 Benchmark page and runner with scenarios (a) winning edit and (b) no edit; JSON export. _R8_ Also `npm run bench` for unattended runs in headless Edge.
-- [ ] 4.7 **Gate run (needs WebGPU):** run 20 runs per scenario for Qwen2.5-1.5B and Hermes-3-3B; save JSON to `docs/benchmarks/`. _R8_ A 2-run smoke on Qwen (Iris Xe) is recorded; blocked on the decisions in `docs/benchmarks/README.md` (speed, input variety at temperature 0).
-- [ ] 4.8 Decide: AI mode default-available, experimental, or cut. Record in `docs/KIRO_USAGE.md` and README. _R8.6_
-- [ ] 4.9 Tune persona and prompt based on results; re-run if changed.
+- [ ] 4.7 **Gate run (needs WebGPU):** 20 runs per scenario on the candidate models; save JSON to `docs/benchmarks/`. _R8_ Not possible on the dev laptop: on Intel Iris Xe the GPU device is lost after about 6 calls. Three 2-run smoke runs are recorded. Open if a machine with a dedicated GPU or Apple Silicon becomes available.
+- [x] 4.8 Decide: AI mode default-available, experimental, or cut. _R8.6_ **Decided 2026-11-19: Experimental (Local WebGPU).** Labeled in the mode bar, Load button, and README with the measured results.
+- [x] 4.9 Tune persona and prompt based on results. 120-token cap, quote-the-evidence unlock rule, `check_policy` not offered, already-read notice. Fixed false unlock requests; did not fix re-reading.
 
 ## Phase 5: Levels 2 and 3
 Start only after 4.8 is recorded.
