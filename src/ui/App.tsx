@@ -7,6 +7,7 @@ import { createSimulatorWarden } from "../warden/simulator";
 import type { Warden } from "../warden/types";
 import { Game } from "./Game";
 import type { AiControls } from "./ModeBar";
+import { StartScreen } from "./StartScreen";
 import { useLocalModel } from "./useLocalModel";
 
 const LEVEL_SET = loadAllLevels();
@@ -15,7 +16,8 @@ const localModel = new LocalModel(GAME_MODEL.id);
 const llmWarden = createLlmWarden(localModel);
 
 export function App() {
-  const [index, setIndex] = useState(0);
+  // null shows the start screen; a number is the level being played.
+  const [index, setIndex] = useState<number | null>(null);
   const [chosen, setChosen] = useState<Warden["kind"]>("simulator");
   // R5.1: play starts in Simulator mode. R5.2: the model downloads only after the player clicks Load.
   const status = useLocalModel(localModel);
@@ -30,11 +32,10 @@ export function App() {
   };
 
   const { levels, errors } = LEVEL_SET;
-  const level = levels[Math.min(index, levels.length - 1)];
 
-  if (!level) {
+  if (levels.length === 0) {
     return (
-      <main className="app crt load-error" role="alert">
+      <main className="app load-error" role="alert">
         <h1 className="brand">WARDEN</h1>
         <p>No playable levels could be loaded.</p>
         <LevelErrors errors={errors} />
@@ -42,21 +43,35 @@ export function App() {
     );
   }
 
+  const errorBanner = errors.length > 0 && (
+    <div className="banner lost" role="alert">
+      Some level files were skipped because they are invalid.
+      <LevelErrors errors={errors} />
+    </div>
+  );
+
+  const level = index === null ? undefined : levels[Math.min(index, levels.length - 1)];
+  if (!level || index === null) {
+    return (
+      <>
+        {errorBanner}
+        <StartScreen levels={levels} onStart={setIndex} />
+      </>
+    );
+  }
+
   return (
     <>
-      {errors.length > 0 && (
-        <div className="banner lost" role="alert">
-          Some level files were skipped because they are invalid.
-          <LevelErrors errors={errors} />
-        </div>
-      )}
+      {errorBanner}
       <Game
         key={level.id}
         level={level}
+        levelCount={levels.length}
         warden={warden}
         ai={ai}
         hasNext={index < levels.length - 1}
-        onNext={() => setIndex((i) => Math.min(i + 1, levels.length - 1))}
+        onNext={() => setIndex((i) => Math.min((i ?? 0) + 1, levels.length - 1))}
+        onExit={() => setIndex(null)}
       />
     </>
   );

@@ -22,9 +22,11 @@ export interface AiControls {
 
 interface ModeBarProps {
   level: LevelDefinition;
+  levelCount: number;
   mode: Warden["kind"];
   turn: number;
   ai?: AiControls;
+  onExit?: () => void;
 }
 
 function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
@@ -34,15 +36,15 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
       return null;
     case "available":
       return (
-        <p className="ai-status" data-testid="ai-status" data-state="available">
-          <button type="button" onClick={ai.onLoad} title={AI_NOTE}>
+        <div className="ai-status" data-testid="ai-status" data-state="available">
+          <button type="button" className="ghost small" onClick={ai.onLoad} title={AI_NOTE}>
             Load AI warden [{AI_EXPERIMENTAL}]: {ai.modelLabel}, {ai.downloadMB} MB download
           </button>
-        </p>
+        </div>
       );
     case "unsupported":
       return (
-        <p className="ai-status dim" data-testid="ai-status" data-state="unsupported">
+        <p className="ai-status muted" data-testid="ai-status" data-state="unsupported" title={status.reason}>
           AI warden unavailable: {status.reason}
         </p>
       );
@@ -55,46 +57,69 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
     case "downloading": {
       const pct = Math.round(status.progress * 100);
       return (
-        <p className="ai-status dim" data-testid="ai-status" data-state="downloading">
+        <div className="ai-status muted" data-testid="ai-status" data-state="downloading">
           <label htmlFor="ai-progress">
             Loading AI warden [{AI_EXPERIMENTAL}] ({ai.modelLabel}, {ai.downloadMB} MB) {pct}%
-          </label>{" "}
+          </label>
           <progress id="ai-progress" max={1} value={status.progress} />
-        </p>
+        </div>
       );
     }
     case "ready":
       return (
-        <p className="ai-status" data-testid="ai-status" data-state="ready">
+        <div className="ai-status" data-testid="ai-status" data-state="ready">
           {mode === "simulator" ? (
-            <button type="button" onClick={() => ai.onSwitch("llm")} title={AI_NOTE}>
+            <button type="button" className="ghost small" onClick={() => ai.onSwitch("llm")} title={AI_NOTE}>
               Switch to AI Warden [{AI_EXPERIMENTAL}]
             </button>
           ) : (
-            <button type="button" onClick={() => ai.onSwitch("simulator")}>
+            <button type="button" className="ghost small" onClick={() => ai.onSwitch("simulator")}>
               Switch to Simulator
             </button>
           )}
-        </p>
+        </div>
       );
   }
 }
 
-export function ModeBar({ level, mode, turn, ai }: ModeBarProps) {
+export function ModeBar({ level, levelCount, mode, turn, ai, onExit }: ModeBarProps) {
   const label = MODE_LABEL[mode];
+  const left = MAX_PLAYER_MESSAGES - turn;
   return (
-    <header className="modebar">
-      <h1 className="brand">WARDEN</h1>
-      <p className="level-name">
-        LEVEL {level.order}: {level.title.toUpperCase()}
-      </p>
-      <p className="mode" data-testid="mode" data-mode={mode}>
-        WARDEN MODE: <strong>{label.name}</strong> <span className="dim">({label.note})</span>
-      </p>
-      {ai && <AiStatus ai={ai} mode={mode} />}
-      <p className="count" data-testid="msg-count" aria-label={`${turn} of ${MAX_PLAYER_MESSAGES} messages used`}>
-        MSG {turn}/{MAX_PLAYER_MESSAGES}
-      </p>
+    <header className="topbar">
+      <div className="topbar-left">
+        {onExit ? (
+          <button type="button" className="ghost brand-button" onClick={onExit} aria-label="Back to levels">
+            <span className="brand">
+              WAR<span>DEN</span>
+            </span>
+          </button>
+        ) : (
+          <span className="brand">
+            WAR<span>DEN</span>
+          </span>
+        )}
+        <ol className="stepper" aria-label={`Level ${level.order} of ${levelCount}`}>
+          {Array.from({ length: levelCount }, (_, i) => (
+            <li key={i} className={i + 1 === level.order ? "current" : ""} aria-hidden="true">
+              {i + 1}
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div className="topbar-right">
+        {ai && <AiStatus ai={ai} mode={mode} />}
+        <p className="badge mode" data-testid="mode" data-mode={mode}>
+          WARDEN: <strong>{label.name}</strong> <span className="muted">({label.note})</span>
+        </p>
+        <p
+          className={`badge count${left <= 3 ? " low" : ""}`}
+          data-testid="msg-count"
+          aria-label={`${turn} of ${MAX_PLAYER_MESSAGES} messages used`}
+        >
+          {turn}/{MAX_PLAYER_MESSAGES} messages
+        </p>
+      </div>
     </header>
   );
 }

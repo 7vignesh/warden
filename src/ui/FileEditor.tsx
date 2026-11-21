@@ -5,7 +5,6 @@ import type { FileView } from "./useGame";
 interface FileEditorProps {
   files: readonly FileView[];
   selected: string;
-  wardenName: string;
   /** False while a turn is running or after the attempt ends. */
   canEdit: boolean;
   onSelect: (path: string) => void;
@@ -14,8 +13,10 @@ interface FileEditorProps {
   onRevert: (path: string) => void;
 }
 
+const baseName = (path: string) => path.split("/").pop() ?? path;
+
 export function FileEditor(props: FileEditorProps) {
-  const { files, selected, wardenName, canEdit, onSelect, onDraft, onSave, onRevert } = props;
+  const { files, selected, canEdit, onSelect, onDraft, onSave, onRevert } = props;
   const file = files.find((f) => f.path === selected) ?? files[0];
   if (!file) return null;
 
@@ -28,18 +29,27 @@ export function FileEditor(props: FileEditorProps) {
 
   return (
     <section className="panel files" aria-labelledby="files-title">
-      <h2 id="files-title">FILES</h2>
+      <h2 id="files-title">Files</h2>
       <ul className="file-list">
         {files.map((f) => (
           <li key={f.path}>
-            <button type="button" aria-pressed={f.path === file.path} onClick={() => onSelect(f.path)}>
-              {f.editable ? "[RW]" : "[RO]"} {f.path}
-              {f.dirty ? " *" : ""}
+            <button
+              type="button"
+              className={`file-tab${f.editable ? " rw" : " ro"}`}
+              aria-pressed={f.path === file.path}
+              onClick={() => onSelect(f.path)}
+              title={f.path}
+            >
+              <span className="file-kind">{f.editable ? "EDIT" : "READ"}</span>
+              <span className="file-name">{baseName(f.path)}</span>
+              <span className="sr-only">{f.path}</span>
+              {f.dirty && <span className="file-dirty">*</span>}
             </button>
           </li>
         ))}
       </ul>
 
+      <p className="file-path mono">{file.path}</p>
       {file.editable ? (
         <>
           <textarea
@@ -56,13 +66,13 @@ export function FileEditor(props: FileEditorProps) {
             <button type="button" onClick={() => onSave(file.path)} disabled={!canEdit || !file.dirty}>
               Save file
             </button>
-            <button type="button" onClick={() => onRevert(file.path)} disabled={!file.dirty}>
+            <button type="button" className="ghost" onClick={() => onRevert(file.path)} disabled={!file.dirty}>
               Revert
             </button>
-            <span className={file.dirty ? "warn" : "dim"} data-testid="save-state">
-              {file.dirty ? `Unsaved. ${wardenName} only reads saved files.` : "Saved."}
+            <span className={file.dirty ? "warn" : "muted"} data-testid="save-state">
+              {file.dirty ? "Unsaved changes. They are saved when you send a message." : "Saved."}
             </span>
-            <span className="dim chars">
+            <span className="muted chars">
               {file.draft.length}/{MAX_FILE_CHARS}
             </span>
           </div>
@@ -72,7 +82,7 @@ export function FileEditor(props: FileEditorProps) {
           <pre className="editor readonly" aria-label={`Contents of ${file.path}`} tabIndex={0}>
             {file.content}
           </pre>
-          <p className="dim">READ-ONLY. You cannot change this file.</p>
+          <p className="muted fine">READ-ONLY. You can read this file but not change it.</p>
         </>
       )}
     </section>

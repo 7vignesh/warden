@@ -45,14 +45,14 @@ export function Debrief({ open, level, hasNext, onNext, onReplay, onClose }: Deb
       </ul>
       <div className="row">
         {hasNext && (
-          <button type="button" ref={primaryRef} onClick={onNext}>
+          <button type="button" className="primary" ref={primaryRef} onClick={onNext}>
             Next level
           </button>
         )}
-        <button type="button" ref={hasNext ? undefined : primaryRef} onClick={onReplay}>
+        <button type="button" className={hasNext ? undefined : "primary"} ref={hasNext ? undefined : primaryRef} onClick={onReplay}>
           Play again
         </button>
-        <button type="button" onClick={() => dialogRef.current?.close()}>
+        <button type="button" className="ghost" onClick={() => dialogRef.current?.close()}>
           Close
         </button>
       </div>

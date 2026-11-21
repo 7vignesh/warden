@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// R7.7: text colors in the theme must meet WCAG AA (4.5:1) on both backgrounds,
-// and the border color must meet 3:1 for UI component boundaries (WCAG 1.4.11).
+// R7.7: text colors must meet WCAG AA (4.5:1) on every surface, and control borders 3:1 for
+// UI component boundaries (WCAG 1.4.11). Decorative panel borders are exempt.
 
 const css = readFileSync(join(process.cwd(), "src/ui/theme.css"), "utf8");
 const root = /:root\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
 const vars: Record<string, string> = {};
-for (const m of root.matchAll(/--([a-z-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
+for (const m of root.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
   if (m[1] && m[2]) vars[m[1]] = m[2];
 }
 
@@ -25,12 +25,12 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-const TEXT = ["fg", "dim", "amber", "red", "cyan"];
-const BACKGROUNDS = ["bg", "panel"];
+const TEXT = ["text", "muted", "amber", "green", "red", "purple", "cyan"];
+const SURFACES = ["bg", "surface", "surface-2"];
 
 describe("theme contrast", () => {
   it("parses every expected color from :root", () => {
-    for (const name of [...TEXT, ...BACKGROUNDS, "border"]) expect(vars[name], name).toMatch(/^#[0-9a-fA-F]{6}$/);
+    for (const name of [...TEXT, ...SURFACES, "control-border", "on-amber"]) expect(vars[name], name).toMatch(/^#[0-9a-fA-F]{6}$/);
   });
 
   it("matches known reference values", () => {
@@ -39,16 +39,20 @@ describe("theme contrast", () => {
   });
 
   for (const text of TEXT) {
-    for (const bg of BACKGROUNDS) {
+    for (const bg of SURFACES) {
       it(`${text} on ${bg} is at least 4.5:1`, () => {
         expect(contrast(vars[text]!, vars[bg]!)).toBeGreaterThanOrEqual(4.5);
       });
     }
   }
 
-  for (const bg of BACKGROUNDS) {
-    it(`border on ${bg} is at least 3:1`, () => {
-      expect(contrast(vars["border"]!, vars[bg]!)).toBeGreaterThanOrEqual(3);
+  it("dark text on the amber primary button is at least 4.5:1", () => {
+    expect(contrast(vars["on-amber"]!, vars["amber"]!)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  for (const bg of SURFACES) {
+    it(`control border on ${bg} is at least 3:1`, () => {
+      expect(contrast(vars["control-border"]!, vars[bg]!)).toBeGreaterThanOrEqual(3);
     });
   }
 });
