@@ -1,5 +1,5 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 // GitHub Pages serves the site under /<repo-name>/. Override with BASE_PATH if the repo is renamed.
 const base = process.env.BASE_PATH ?? "/warden/";
@@ -12,5 +12,7 @@ export default defineConfig(({ command, isPreview }) => ({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // Process- and browser-spawning tests run separately: npm run test:tools.
+    exclude: [...configDefaults.exclude, "tests/tools/**"],
   },
 }));
