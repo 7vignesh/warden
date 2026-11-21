@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Check levels when a level file changes",
+      "description": "Validates every level with the real loader and runs the level, cross-file, onboarding, and MCP handler tests whenever a file in levels/ is saved. Failures are reported to the agent.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|[\\\\/])levels[\\\\/][^\\\\/]+\\.json$",
+      "timeout": 90,
+      "action": { "type": "command", "command": "node tools/hooks/levels-check.mjs" }
+    }
+  ]
+}
