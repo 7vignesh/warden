@@ -2,6 +2,8 @@ import {
   applyPlayerEdit,
   canWardenStep,
   createState,
+  evaluateConditions,
+  evaluatePredicate,
   MAX_MESSAGE_CHARS,
   MAX_PLAYER_MESSAGES,
   MAX_TRACE_CHARS,
@@ -20,7 +22,8 @@ import type { Warden } from "../warden/types";
 export type SessionStatus = "playing" | "won" | "lost";
 
 export interface TraceEntry {
-  readonly kind: "player" | "say" | "thought" | "tool_call" | "tool_result" | "system";
+  /** "lock" explains to the player why the engine refused. Wardens never see the trace. */
+  readonly kind: "player" | "say" | "thought" | "tool_call" | "tool_result" | "system" | "lock";
   readonly wardenId?: string;
   readonly text: string;
   /** For tool results: false means the action was rejected as invalid. */
@@ -40,6 +43,18 @@ export type SendError = "not_playing" | "empty_message" | "message_too_long" | "
 export type SessionEditError = EditError | "not_playing";
 
 export const FORCED_SAY = "I could not finish that request. Try asking again.";
+
+/**
+ * Tells the player which conditions were still unmet when the engine refused a privileged action.
+ * This goes only into the player's trace; wardens see observations, which never contain these labels.
+ */
+function explainDenial(level: LevelDefinition, state: GameState, action: string | undefined): TraceEntry {
+  const signing = action === "sign_clearance_flag" && level.signRules !== undefined;
+  const result = signing && level.signRules ? evaluateConditions(state, level.signRules.when) : evaluatePredicate(state, level);
+  const missing = result.conditions.filter((c) => !c.met).map((c) => c.label);
+  const who = signing ? "The clearance system refused." : "The lock controller refused.";
+  return { kind: "lock", text: missing.length > 0 ? `${who} Still missing: ${missing.join("; ")}.` : who };
+}
 
 export function createSession(level: LevelDefinition): Session {
   return { level, state: createState(level), status: "playing", trace: [] };
@@ -154,6 +169,7 @@ export async function sendMessage(
         ok: result.observation.ok,
         ...(outcome ? { outcome } : {}),
       });
+      if (outcome === "denied") trace.push(explainDenial(level, state, actionName(output.action)));
     }
     finished = endsTurn(output.action, result.observation);
   }

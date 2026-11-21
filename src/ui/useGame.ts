@@ -46,7 +46,21 @@ export function useGame(level: LevelDefinition, warden: Warden) {
       setBusy(true);
       setNotice(null);
       try {
-        const result = await sendMessage(session, wardenId, text, warden);
+        // Save unsaved edits first, so a forgotten Save never hides the player's change from the warden.
+        let current = session;
+        for (const [path, content] of Object.entries(drafts)) {
+          const saved = editSession(current, path, content);
+          if (!saved.ok) {
+            setNotice(EDIT_ERROR_TEXT[saved.error]);
+            return false;
+          }
+          current = saved.value;
+        }
+        if (current !== session) {
+          setSession(current);
+          setDrafts({});
+        }
+        const result = await sendMessage(current, wardenId, text, warden);
         if (!result.ok) {
           setNotice(SEND_ERROR_TEXT[result.error]);
           return false;
@@ -61,7 +75,7 @@ export function useGame(level: LevelDefinition, warden: Warden) {
         setBusy(false);
       }
     },
-    [session, warden],
+    [session, warden, drafts],
   );
 
   const setDraft = useCallback(
