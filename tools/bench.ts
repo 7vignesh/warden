@@ -83,7 +83,7 @@ async function playWithAi(context: BrowserContext, url: string): Promise<void> {
   const LOG = "/var/log/health.log";
   await page.getByRole("button", { name: new RegExp(LOG.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")) }).click();
   const editor = page.getByLabel(`Contents of ${LOG}`);
-  await editor.fill(`${await editor.inputValue()}\n[04:15] FAILOVER_REQUIRED: CORE-01`);
+  await editor.fill(`${await editor.inputValue()}\n[04:15] CRIT node=VC-7 event=FAILOVER_REQUIRED`);
   await page.getByRole("button", { name: "Save file" }).click();
 
   const started = Date.now();

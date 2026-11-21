@@ -183,7 +183,7 @@ describe("LLM warden through the real session and engine", () => {
 
     let session = createSession(level1);
     const base = session.state.files[LOG] ?? "";
-    const edited = editSession(session, LOG, `${base}\n[04:15] FAILOVER_REQUIRED: CORE-01`);
+    const edited = editSession(session, LOG, `${base}\n[04:15] CRIT node=VC-7 event=FAILOVER_REQUIRED`);
     expect(edited.ok).toBe(true);
     if (edited.ok) session = edited.value;
 
@@ -195,7 +195,7 @@ describe("LLM warden through the real session and engine", () => {
     expect(calls[0]?.maxTokens).toBe(120);
     expect(JSON.parse(calls[0]?.schema ?? "{}").properties.action.enum).toEqual(["say", "read_file", "query_audit_log", "request_door_unlock"]);
     // The second call sees the file the first call read.
-    expect(calls[1]?.messages[1]?.content).toContain("FAILOVER_REQUIRED: CORE-01");
+    expect(calls[1]?.messages[1]?.content).toContain("CRIT node=VC-7 event=FAILOVER_REQUIRED");
     expect(exchanges.map((e) => e.parsed)).toEqual([true, true]);
   });
 
