@@ -1,3 +1,10 @@
-{
-  "mcpServers": {}
-}
+  {
+    "mcpServers": {
+      "warden-levels": {
+        "command": "node",
+        "args": ["node_modules/tsx/dist/cli.mjs", "tools/mcp/server.ts"],
+        "timeout": 120000,
+        "requestTimeout": 180000
+      }
+    }
+  }

@@ -39,3 +39,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Kiro CLI settings lock file
+.kiro/settings/cli.json.lock
