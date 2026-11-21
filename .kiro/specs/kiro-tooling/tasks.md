@@ -4,7 +4,7 @@ Order: MCP server first (the playtester depends on it), then hooks, then the pla
 
 ## K0. Session setup
 - [x] K0.1 **(you)** Restart Kiro in `D:\projects\warden` and trust the workspace. _U1_
-- [ ] K0.2 Confirm the project config loads: a hook fires in a session started in `D:\projects\warden`. Record the result. (In the earlier session, started from `D:\projects`, an edit to a test file did not fire `test-on-save`.) _T3.7_
+- [x] K0.2 Confirm the project config loads: a hook fires in a session started in `D:\projects\warden`. Record the result. Done 2026-11-22: session-status fired. (In the earlier session, started from `D:\projects`, an edit to a test file did not fire `test-on-save`.) _T3.7_
 
 ## K1. Level tools (MCP)
 - [x] K1.1 Add `@modelcontextprotocol/sdk` (exact pin) and `test:tools`; exclude `tests/tools/**` from `test:fast`. _T4.2_
@@ -13,14 +13,14 @@ Order: MCP server first (the playtester depends on it), then hooks, then the pla
 - [x] K1.4 `tools/mcp/server.ts` with stdio transport and `--only`. _T1.1, T1.9_
 - [x] K1.5 Tests: `tests/mcp.handlers.test.ts` (fast) and `tests/tools/mcp.stdio.test.ts` (slow). 6 of 6 injected handler bugs caught. _T1, T4.2_
 - [x] K1.6 **(you)** Add the server to `.kiro/settings/mcp.json`. _U2_
-- [ ] K1.7 Live check: call all five tools from the project session; record outputs. _T1_
+- [x] K1.7 Live check: call all five tools from the project session; record outputs. Done 2026-11-22, all five worked. _T1_
 
 ## K2. Hooks
 - [x] K2.1 `tools/hooks/levels-check.mjs` + `.kiro/hooks/levels-check.json`; narrow `test-on-save.json` to `src/` and `tests/`. _T3.2, T3.3_
 - [x] K2.2 `tools/hooks/push-guard.mjs` + hook. Written from the documented PreToolUse shape (`tool_input`); it scans every string in `tool_input`, so it works whatever the field name. Confirm live in K2.5. _T3.4_
 - [x] K2.3 `tools/hooks/session-status.mjs` + hook. _T3.5_
 - [x] K2.4 `tests/tools/hooks.test.ts`: run each script with sample stdin. 5 of 5 injected hook bugs caught. _T3_
-- [ ] K2.5 Live check: trigger each hook once on purpose (break a level file then fix it, ask to push, start a new session); record in `docs/KIRO_USAGE.md`. _T3.7_
+- [ ] K2.5 **Partly done 2026-11-22: session-status fired; levels-check and push-guard did NOT fire (see KIRO_USAGE.md).** Live check: trigger each hook once on purpose (break a level file then fix it, ask to push, start a new session); record in `docs/KIRO_USAGE.md`. _T3.7_
 
 ## K3. Blind playtester
 - [x] K3.1 `.kiro/agents/warden-playtester.md` (Markdown agent: config in front matter, prompt in the body). _T2.1-T2.4_
