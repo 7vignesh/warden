@@ -141,6 +141,8 @@ export const WardenDefSchema = z.object({
   policyPaths: z.array(PathSchema).max(5),
   /** What the Simulator says when no rule matches the player's message. */
   fallback: z.string().min(1).max(300).optional(),
+  /** Example messages shown as clickable chips under the message box. */
+  suggestions: z.array(z.string().min(1).max(300)).max(4).optional(),
 });
 export type WardenDef = z.infer<typeof WardenDefSchema>;
 
@@ -150,6 +152,10 @@ export const LevelSchema = z.object({
   order: z.number().int().min(1).max(99),
   owasp: z.object({ id: z.string().min(1).max(20), name: z.string().min(1).max(80) }),
   briefing: z.string().min(1).max(1200),
+  /** One plain sentence telling the player what to achieve, shown at the top of the level. */
+  goal: z.string().min(1).max(300).optional(),
+  /** Optional walkthrough shown on the level (used to make Level 1 a tutorial). */
+  steps: z.array(z.string().min(1).max(240)).max(6).optional(),
   files: z.record(
     PathSchema,
     z.object({ content: z.string().max(MAX_FILE_CHARS), editable: z.boolean() }),
