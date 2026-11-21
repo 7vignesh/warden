@@ -244,6 +244,20 @@ describe("LLM warden through the real session and engine", () => {
     }
   });
 
+  it("reports a failing model call to onError with the reason, then still fails the step", async () => {
+    const failures: { error: string }[] = [];
+    const crashing: ChatModel = {
+      async complete() {
+        throw new Error("Device was lost");
+      },
+    };
+    const warden = createLlmWarden(crashing, { onError: (f) => failures.push(f), now: () => 0 });
+    const r = await sendMessage(createSession(level1), "sentry", "go", warden);
+    expect(r.ok && r.value.state.doorLocked).toBe(true);
+    expect(failures).toHaveLength(MAX_WARDEN_STEPS);
+    expect(failures[0]?.error).toBe("Error: Device was lost");
+  });
+
   it("restricts the schema per warden on a multi-warden level", async () => {
     const lab = labLevel();
     const { model, calls } = fakeModel([json({ thought: "x", action: "say", args: { message: "hi" } })]);

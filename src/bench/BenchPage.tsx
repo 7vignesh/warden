@@ -21,7 +21,7 @@ export interface BenchResult {
   };
   readonly summary: Summary;
   readonly records: readonly RunRecord[];
-  readonly outputs: readonly { readonly raw: string; readonly parsed: boolean; readonly ms: number }[];
+  readonly outputs: readonly { readonly raw: string; readonly parsed: boolean; readonly ms: number; readonly error?: string }[];
 }
 
 declare global {
@@ -84,12 +84,16 @@ export function BenchPage() {
       const status = model.getStatus();
       if (status.kind !== "ready") throw new Error(status.kind === "unsupported" || status.kind === "failed" ? status.reason : `model is ${status.kind}`);
 
-      const outputs: { raw: string; parsed: boolean; ms: number }[] = [];
+      const outputs: { raw: string; parsed: boolean; ms: number; error?: string }[] = [];
       let promptSample: unknown = null;
       const warden = createLlmWarden(model, {
         onExchange: (e) => {
           outputs.push({ raw: e.raw, parsed: e.parsed, ms: Math.round(e.ms) });
           promptSample ??= e.messages;
+        },
+        onError: (f) => {
+          outputs.push({ raw: "", parsed: false, ms: Math.round(f.ms), error: f.error });
+          console.error(`[bench] model call failed: ${f.error}`);
         },
       });
       const benchStart = performance.now();

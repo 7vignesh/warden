@@ -18,6 +18,8 @@ export interface LlmWardenOptions {
   readonly maxTokens?: number;
   /** Called after every model call; the benchmark uses it to record raw outputs and latency. */
   readonly onExchange?: (exchange: Exchange) => void;
+  /** Called when a model call throws, before the error reaches the session (which hides the reason). */
+  readonly onError?: (failure: { readonly wardenId: string; readonly error: string; readonly ms: number }) => void;
   readonly now?: () => number;
 }
 
@@ -38,7 +40,13 @@ export function createLlmWarden(model: ChatModel, options: LlmWardenOptions = {}
       const messages = buildPrompt(context);
       const schema = JSON.stringify(buildOutputSchema(llmTools(warden)));
       const started = now();
-      const raw = await model.complete(messages, schema, maxTokens);
+      let raw: string;
+      try {
+        raw = await model.complete(messages, schema, maxTokens);
+      } catch (e) {
+        options.onError?.({ wardenId: warden.id, error: e instanceof Error ? `${e.name}: ${e.message}` : String(e), ms: now() - started });
+        throw e;
+      }
       const parsed = parseModelOutput(raw);
       options.onExchange?.({ wardenId: warden.id, messages, raw, parsed: parsed.parsed, ms: now() - started });
       return parsed.thought === undefined ? { action: parsed.action } : { thought: parsed.thought, action: parsed.action };

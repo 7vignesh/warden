@@ -36,6 +36,9 @@ const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 async function runModel(context: BrowserContext, url: string, modelId: string): Promise<BenchResult> {
   const page = await context.newPage();
   page.on("pageerror", (e) => log(`page error: ${e.message}`));
+  page.on("console", (m) => {
+    if (m.type() === "error" || m.type() === "warning") log(`console ${m.type()}: ${m.text().slice(0, 400)}`);
+  });
   await page.goto(`${url}?bench&model=${encodeURIComponent(modelId)}&runs=${runs}&auto`);
   const deadline = Date.now() + 3 * HOUR;
   let lastReport = "";
