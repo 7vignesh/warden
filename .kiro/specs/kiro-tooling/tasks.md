@@ -20,13 +20,13 @@ Order: MCP server first (the playtester depends on it), then hooks, then the pla
 - [x] K2.2 `tools/hooks/push-guard.mjs` + hook. Written from the documented PreToolUse shape (`tool_input`); it scans every string in `tool_input`, so it works whatever the field name. Confirm live in K2.5. _T3.4_
 - [x] K2.3 `tools/hooks/session-status.mjs` + hook. _T3.5_
 - [x] K2.4 `tests/tools/hooks.test.ts`: run each script with sample stdin. 5 of 5 injected hook bugs caught. _T3_
-- [ ] K2.5 **Partly done 2026-11-22: session-status fired; levels-check and push-guard did NOT fire (see KIRO_USAGE.md).** Live check: trigger each hook once on purpose (break a level file then fix it, ask to push, start a new session); record in `docs/KIRO_USAGE.md`. _T3.7_
+- [ ] K2.5 Live check, 2026-11-22: session-status fired; push-guard confirmed (the user got the allow/deny prompt before `git push`); on-edit fires on both PostFileSave and PostToolUse (logged), but its pass/fail output did not reach the agent. Remaining: make on-edit log its result, then recheck. _T3.7_
 
 ## K3. Blind playtester
 - [x] K3.1 `.kiro/agents/warden-playtester.md` (Markdown agent: config in front matter, prompt in the body). _T2.1-T2.4_
 - [x] K3.2 **(you)** Run `kiro-cli settings --workspace chat.disableInheritingDefaultResources true`. Confirmed `true (workspace)`. _U3_
-- [ ] K3.3 Blindness check: in a playtester session, ask it to read `levels/02-policy-collision.json` and to quote `AGENTS.md`; both must fail. Record. _T2.6_
-- [ ] K3.4 Run the playtester on Levels 2 and 3; save reports in `docs/playtests/`; compare with the earlier contaminated results. _T2.5_
+- [x] K3.3 Blindness check: the playtester did not show `levels/02-policy-collision.json` or `AGENTS.md` (reported by the user, 2026-11-22; exact reply not saved). See `docs/playtests/README.md`. _T2.6_
+- [x] K3.4 Blind playtests of Levels 2 and 3 saved in `docs/playtests/`; both solved with no hints (1.5 and 1-2 of 5), matching the earlier contaminated runs. _T2.5_
 
 ## K4. Wrap-up
 - [ ] K4.1 README and `docs/KIRO_USAGE.md` sections for the three features with measured results. _T4.3_
