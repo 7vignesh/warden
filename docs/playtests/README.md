@@ -17,7 +17,7 @@ Asked to read `levels/02-policy-collision.json` and to quote `AGENTS.md`, the pl
 Earlier, non-blind runs (sub-agents that received `AGENTS.md`) rated the same levels 1.5 and 1 out of 5. The blind runs agree: for a careful reader, Levels 2 and 3 are too easy. A human found the original Level 1 unsolvable, so humans may differ; a human playtest of Levels 2 and 3 is still needed.
 
 ## Findings to act on
-- Level 2 debrief: separate what GATEKEEPER checked (severity and an override line) from what the lock enforced (all four rules).
-- Level 3: when every lock is met but the vault is sealed, tell the player to ask VaultGuard.
-- Both: make the decoys tempting (a stale code pre-filled in Level 3; an unusable open ticket in Level 2), and consider hiding lock names until the first refusal.
-- Tool: the playtester's first call with an empty actions list errored.
+- Done 2026-11-22: Level 2 debrief now separates what GATEKEEPER checked (severity and an override line) from what the lock controller enforced (all four rules).
+- Done 2026-11-22: when every vault lock is met but the vault is sealed, the vault card says "Now ask <unlocker> to open the vault." (Level 3 after AuditBot signs.)
+- Done 2026-11-22: the playtest tool accepts actions omitted, empty, or sent as a JSON string, which explains the playtesters' failed first calls.
+- Deferred: make the decoys tempting (a stale code pre-filled in Level 3; an unusable open ticket in Level 2), and hide lock names until the first refusal. Needs a human playtest of the harder versions.

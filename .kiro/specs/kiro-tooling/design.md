@@ -83,7 +83,7 @@ Server name `warden-play` is distinct from the main `warden-levels`, so the play
 
 | File | Trigger | Matcher | Command | Timeout |
 |---|---|---|---|---|
-| `on-edit.json` | PostToolUse and PostFileSave | none | `node tools/hooks/on-edit.mjs` | 90 s |
+| `on-edit.json` | PostToolUse | none | `node tools/hooks/on-edit.mjs` | 90 s |
 | `push-guard.json` | PreToolUse | none | `node tools/hooks/push-guard.mjs` | 10 s |
 | `session-status.json` | SessionStart | none | `node tools/hooks/session-status.mjs` | 15 s |
 | `log-kiro-usage.json` | PostTaskExec | unchanged | unchanged | - |
@@ -92,6 +92,8 @@ Server name `warden-play` is distinct from the main `warden-levels`, so the play
 - `on-edit.mjs` acts only for write tools (name contains write, replace, edit, create, append, delete, save, patch, or move) and file events. It takes paths from `tool_input` and path fields only, ignoring multi-line strings, so file contents cannot trigger it. A level file runs `levels-check.mjs`; a file in `src/` or `tests/` runs the fast suite. If both triggers fire for one edit, the second is skipped for 15 s.
 - `push-guard.mjs` acts only for shell tools (name contains pwsh, bash, shell, cmd, command, or exec), so a file write that contains the text of a push is never blocked.
 - Both log one line per event to `tmp/hook-events.log` (gitignored), to confirm real tool names; matchers can be added once those are known.
+
+**Second change (2026-11-22, after the retest).** The log showed PostFileSave and PostToolUse both firing for one edit at the same moment, and no result reached the agent. `on-edit` now uses PostToolUse only (its output is documented to reach the agent; file-save output is not), the 15 s dedupe is gone, and every check logs its result as `decision=levels:pass`, `levels:fail`, `code:pass`, or `code:fail`, so a clean run can be told apart from lost output.
 
 Original table, kept for reference:
 
