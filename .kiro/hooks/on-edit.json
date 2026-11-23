@@ -3,15 +3,8 @@
   "hooks": [
     {
       "name": "Check levels or run fast tests after an edit",
-      "description": "After every tool call, tools/hooks/on-edit.mjs looks at write tools only: an edit to levels/*.json runs the level check, an edit to src/ or tests/ runs the fast tests, anything else passes silently. No matcher, because Kiro CLI's tool names differ from the documented categories.",
+      "description": "After every tool call, tools/hooks/on-edit.mjs looks at write tools only: an edit to levels/*.json runs the level check, an edit to src/ or tests/ runs the fast tests, anything else passes silently. It logs each result to tmp/hook-events.log. No matcher, because Kiro CLI's tool names differ from the documented categories.",
       "trigger": "PostToolUse",
-      "timeout": 90,
-      "action": { "type": "command", "command": "node tools/hooks/on-edit.mjs" }
-    },
-    {
-      "name": "Same check on file-save events",
-      "description": "Covers clients where the file-save trigger fires (for example the IDE). The script checks the same edit only once if both triggers fire.",
-      "trigger": "PostFileSave",
       "timeout": 90,
       "action": { "type": "command", "command": "node tools/hooks/on-edit.mjs" }
     }

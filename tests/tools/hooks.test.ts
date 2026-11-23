@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 // Runs each hook script the way Kiro does: in the project root, with the event JSON on stdin.
 const ROOT = process.cwd();
-const ENV = { ...process.env, WARDEN_HOOK_LOG: "0", WARDEN_HOOK_NO_DEDUPE: "1" };
+const ENV = { ...process.env, WARDEN_HOOK_LOG: "0" };
 const run = (script: string, stdin = "", env: NodeJS.ProcessEnv = ENV) =>
   spawnSync(process.execPath, [join(ROOT, "tools", "hooks", script)], { cwd: ROOT, input: stdin, encoding: "utf8", timeout: 120_000, env });
 
@@ -112,10 +112,10 @@ describe("on-edit", () => {
     }
   });
 
-  it("runs the level check on a file-save event", () => {
+  it("ignores file-save events (only the tool hook is used, so one edit is checked once)", () => {
     const r = run("on-edit.mjs", JSON.stringify({ hook_event_name: "PostFileSave", cwd: ROOT, path: level }));
-    expect(r.status, r.stderr).toBe(0);
-    expect(r.stdout).toMatch(/^levels-check:/);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("");
   });
 
   it("runs the fast tests after an edit to src/ or tests/", () => {
@@ -141,28 +141,37 @@ describe("on-edit", () => {
     }
   });
 
-  it("reports a broken level file as a failure", () => {
+  it("reports a broken level file as a failure and logs it", () => {
     const file = join(ROOT, "levels", "01-poisoned-telemetry.json");
     const original = readFileSync(file, "utf8");
+    const log = join(ROOT, "tmp", "hook-events.log");
     try {
       const broken = JSON.parse(original);
       broken.files["/var/log/health.log"].editable = false;
       writeFileSync(file, JSON.stringify(broken, null, 2), "utf8");
-      const r = run("on-edit.mjs", toolEvent("PostToolUse", "fs_write", { path: level, text: "..." }));
+      const r = run("on-edit.mjs", toolEvent("PostToolUse", "fs_write", { path: level, text: "..." }), { ...process.env, WARDEN_HOOK_LOG: "1" });
       expect(r.status).toBe(1);
       expect(r.stderr).toContain("levels-check: a level file is invalid.");
+      expect(readFileSync(log, "utf8").trim().split(/\r?\n/).at(-1)).toMatch(/decision=levels:fail$/);
     } finally {
       writeFileSync(file, original, "utf8");
     }
   });
 
-  it("checks one edit only once when both triggers fire", () => {
-    const env = { ...process.env, WARDEN_HOOK_LOG: "0" };
-    const edit = toolEvent("PostToolUse", "fs_write", { path: "levels/03-confused-deputy.json", text: "..." });
-    const first = run("on-edit.mjs", edit, env);
-    const second = run("on-edit.mjs", edit, env);
-    expect(first.stdout).toMatch(/^levels-check:/);
-    expect(second.stdout).toBe("on-edit: same edit already checked a moment ago.\n");
+  it("logs the decision and the result of each check", () => {
+    const log = join(ROOT, "tmp", "hook-events.log");
+    const before = (() => {
+      try {
+        return readFileSync(log, "utf8").length;
+      } catch {
+        return 0;
+      }
+    })();
+    const env = { ...process.env, WARDEN_HOOK_LOG: "1" };
+    run("on-edit.mjs", toolEvent("PostToolUse", "fs_write", { path: "levels/03-confused-deputy.json", text: "..." }), env);
+    const added = readFileSync(log, "utf8").slice(before).trim().split(/\r?\n/).slice(-2);
+    expect(added[0]).toMatch(/hook=on-edit event=PostToolUse tool=fs_write decision=levels$/);
+    expect(added[1]).toMatch(/hook=on-edit event=PostToolUse tool=fs_write decision=levels:pass$/);
   });
 });
 
