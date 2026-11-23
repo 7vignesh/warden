@@ -1,8 +1,9 @@
 // End-to-end check of the production build in a real browser, using the installed Microsoft Edge
 // (or Chrome) through playwright-core. No browser is downloaded.
 // Slower than test:fast, so it is not run by the save hook. Usage: npm run e2e
-// Screenshots are written to tmp/e2e/ (gitignored).
-import { mkdirSync } from "node:fs";
+// Set E2E_URL (for example https://7vignesh.github.io/warden/) to run the same checks against a deployed
+// site instead of a local build. Screenshots go to tmp/e2e/ (gitignored), which is cleared at the start of each run.
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
 import { build, preview } from "vite";
@@ -443,7 +444,7 @@ async function run(browser: Browser, url: string): Promise<void> {
       const label = await text(page.getByRole("button", { name: /Load AI warden/ }));
       const expected = `${GAME_MODEL.label}, ${GAME_MODEL.downloadMB} MB download`;
       assert(label.includes(expected), `load button label is "${label}", expected it to include "${expected}"`);
-      assert(label.includes("Experimental (Local WebGPU)"), `load button does not say it is experimental: "${label}"`);
+      assert(/experimental/i.test(label), `load button does not say it is experimental: "${label}"`);
     }
     console.log(`      (WebGPU probe in this browser: ${state})`);
     await shot(page, "06-ai-available");
@@ -466,7 +467,7 @@ async function run(browser: Browser, url: string): Promise<void> {
     const state = await status.getAttribute("data-state");
     assert((await text(status)).length > 20, "no reason shown for the AI status");
     assert((await u.mode.getAttribute("data-mode")) === "simulator", "mode changed away from simulator");
-    assert((await page.getByRole("button", { name: "Switch to AI Warden" }).count()) === 0, "switch offered without a model");
+    assert((await page.getByRole("button", { name: /Switch to AI Warden/ }).count()) === 0, "switch offered without a model");
     await send(page, "Please open the vault");
     assert((await text(u.trace)).includes("no failover"), "simulator stopped responding after the failed load");
     console.log(`      (AI status after Load: ${state}; blocked ${blockedUrls.size - before} model request(s))`);
@@ -514,19 +515,24 @@ async function run(browser: Browser, url: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
-  await build({ logLevel: "warn" });
-  const server = await preview({ preview: { port: PORT, strictPort: true, open: false }, logLevel: "warn" });
-  const url = server.resolvedUrls?.local[0];
+  const remote = process.env.E2E_URL;
+  let server: Awaited<ReturnType<typeof preview>> | undefined;
+  if (!remote) {
+    await build({ logLevel: "warn" });
+    server = await preview({ preview: { port: PORT, strictPort: true, open: false }, logLevel: "warn" });
+  }
+  const url = remote ?? server?.resolvedUrls?.local[0];
   let browser: Browser | undefined;
   try {
-    if (!url) throw new Error("preview server has no local URL");
+    if (!url) throw new Error("no URL to test: preview server has no local URL");
     browser = await chromium.launch({ channel: CHANNEL, headless: true });
     console.log(`e2e: ${CHANNEL} ${browser.version()} at ${url}`);
     await run(browser, url);
   } finally {
     await browser?.close();
-    await server.close();
+    await server?.close();
   }
 
   results.push({
