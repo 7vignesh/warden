@@ -56,3 +56,4 @@ _Which requirements used PBT, and any bugs it found that unit tests might miss._
 - **push-guard, logged but not confirmed as a prompt.** `git push origin main` logged `decision=ask` at 23:14:11 and the command ran at 23:14:22 (`pass` on the re-check), pushing `ba25d05..b5ca629`. The 11 s gap fits a user approval, but the agent cannot see whether a prompt was shown. Needs the user to confirm.
 - **tmp/hook-events.log** shows the sequence above. The log records the decision, not the check's output.
 - **Open:** make the log record the check's result (pass or fail) so a missing message can be told apart from a check that passed. K2.5 stays unticked.
+- **K2.5 recheck (2026-11-23).** Set \/var/log/health.log\ to \editable: false\ and back. tmp/hook-events.log: \on-edit ... decision=levels:fail\ after the first edit, \levels:pass\ after the restore. The agent saw no hook message after either edit, so the check runs but its output is not delivered. K2.5 stays unticked.
