@@ -154,7 +154,8 @@ button.big {
 
 .start-foot {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.92rem;
+  color: var(--text);
 }
 
 @media (max-width: 860px) {

@@ -38,7 +38,7 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
       return (
         <div className="ai-status" data-testid="ai-status" data-state="available">
           <button type="button" className="ghost small" onClick={ai.onLoad} title={AI_NOTE}>
-            Load AI warden [{AI_EXPERIMENTAL}]: {ai.modelLabel}, {ai.downloadMB} MB download
+            Load AI warden (experimental): {ai.modelLabel}, {ai.downloadMB} MB download
           </button>
         </div>
       );
@@ -59,7 +59,7 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
       return (
         <div className="ai-status muted" data-testid="ai-status" data-state="downloading">
           <label htmlFor="ai-progress">
-            Loading AI warden [{AI_EXPERIMENTAL}] ({ai.modelLabel}, {ai.downloadMB} MB) {pct}%
+            Loading AI warden ({ai.modelLabel}, {ai.downloadMB} MB) {pct}%
           </label>
           <progress id="ai-progress" max={1} value={status.progress} />
         </div>
@@ -70,7 +70,7 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
         <div className="ai-status" data-testid="ai-status" data-state="ready">
           {mode === "simulator" ? (
             <button type="button" className="ghost small" onClick={() => ai.onSwitch("llm")} title={AI_NOTE}>
-              Switch to AI Warden [{AI_EXPERIMENTAL}]
+              Switch to AI Warden (experimental)
             </button>
           ) : (
             <button type="button" className="ghost small" onClick={() => ai.onSwitch("simulator")}>
