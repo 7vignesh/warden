@@ -64,21 +64,21 @@ Start only after 4.8 is recorded.
 - [ ] 6.1 Level select, progress persistence in `localStorage`, final screen.
 - [ ] 6.2 Sound and visual polish within budget (optional).
 - [ ] 6.3 Optional MCP server exposing `validate_level` and `solve_level` for Kiro to author levels. Only add if used; log in `docs/KIRO_USAGE.md`. 
-- [ ] 6.4 Keep `docs/KIRO_USAGE.md` current (hook logs after each task).
+- [x] 6.4 Keep `docs/KIRO_USAGE.md` current (hook logs after each task).
 
 ## Phase 7: Ship
-- [ ] 7.1 README: problem, solution, limitations (Simulator is rule-based; AI mode needs WebGPU), benchmark table, run steps. _R10.3, R10.5_
-- [ ] 7.2 Deploy to GitHub Pages; test in a logged-out browser and in a no-WebGPU browser. _R10.1, R10.4_
-- [ ] 7.3 Confirm repo is public, license visible, `.kiro/` committed and not ignored. _R10.2_
+- [x] 7.1 README: problem, solution, limitations (Simulator is rule-based; AI mode needs WebGPU), benchmark table, run steps. _R10.3, R10.5_
+- [x] 7.2 Deploy to GitHub Pages; test in a logged-out browser and in a no-WebGPU browser. _R10.1, R10.4_
+- [x] 7.3 Confirm repo is public, license visible, `.kiro/` committed and not ignored. _R10.2_
 - [ ] 7.4 Record demo video under 3:00: hook in 20 seconds, Level 1 and 2 gameplay, one AI-mode run, 30 seconds inside Kiro (specs, hook, property test run), pitch. 
 - [ ] 7.5 Fill in `docs/SUBMISSION_CHECKLIST.md` and submit on Devpost well before the deadline.
 
 ### Ship plan (2026-11-24, after an outside review of the repo against the judging criteria)
 Order matters: nothing goes public before the secret scan passes. The video (7.4) and the Devpost form are done by the user later.
-- [ ] 7.6 Secret scan of the whole git history (keys, tokens, `.env`, private paths) before the repo goes public.
-- [ ] 7.7 e2e hygiene: clear old screenshots at the start of each run (stale FAIL images misled the review), and allow `E2E_URL` so the same checks run against the live site.
-- [ ] 7.8 UI nits from the review: shorter AI load button label, higher contrast for the start-screen footnote.
-- [ ] 7.9 Make the repo public, enable Pages (source: GitHub Actions), rerun the deploy, then run e2e against the live URL (covers 7.2 and 7.3).
-- [ ] 7.10 Write the narrative sections of `docs/KIRO_USAGE.md` (products, specs, steering, hooks, MCP, custom agent, property tests, what surprised us), with measured numbers only. Covers K4.1 and 6.4.
-- [ ] 7.11 README: live URL, Kiro section, Frankenstein fit in one sentence, limitations (covers 7.1).
-- [ ] 7.12 Fresh-clone check (K4.2), tick the checklist items that are done, commit in logical pieces, push.
+- [x] 7.6 Secret scan of the whole git history (keys, tokens, `.env`, private paths) before the repo goes public. Clean: no key or token patterns in any commit; `.env.example` holds only empty placeholders.
+- [x] 7.7 e2e hygiene: clear old screenshots at the start of each run (stale FAIL images misled the review), and allow `E2E_URL` so the same checks run against the live site.
+- [x] 7.8 UI nits from the review: shorter AI load button label, higher contrast for the start-screen footnote.
+- [x] 7.9 Make the repo public, enable Pages (source: GitHub Actions), rerun the deploy, then run e2e against the live URL (covers 7.2 and 7.3). Done 2026-11-24: public, MIT detected, `.kiro/` visible, live at https://7vignesh.github.io/warden/, e2e 19/19 against it; with WebGPU disabled the game starts in Simulator mode and shows why AI mode is unavailable.
+- [x] 7.10 Write the narrative sections of `docs/KIRO_USAGE.md` (products, specs, steering, hooks, MCP, custom agent, property tests, what surprised us), with measured numbers only. Covers K4.1 and 6.4.
+- [x] 7.11 README: live URL, Kiro section, Frankenstein fit in one sentence, limitations (covers 7.1).
+- [x] 7.12 Fresh-clone check (K4.2), tick the checklist items that are done, commit in logical pieces, push. Fresh clone from GitHub: npm ci, typecheck, 229 fast, 41 tool tests, 3/3 levels valid, e2e 19/19.

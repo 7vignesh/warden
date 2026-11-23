@@ -29,5 +29,5 @@ Order: MCP server first (the playtester depends on it), then hooks, then the pla
 - [x] K3.4 Blind playtests of Levels 2 and 3 saved in `docs/playtests/`; both solved with no hints (1.5 and 1-2 of 5), matching the earlier contaminated runs. _T2.5_
 
 ## K4. Wrap-up
-- [ ] K4.1 README and `docs/KIRO_USAGE.md` sections for the three features with measured results. _T4.3_
-- [ ] K4.2 Fresh-clone check: `npm ci`, typecheck, `test:fast`, `test:tools`, `e2e`. Commit in logical pieces. _T4_
+- [x] K4.1 README and `docs/KIRO_USAGE.md` sections for the three features with measured results. _T4.3_
+- [x] K4.2 Fresh-clone check: `npm ci`, typecheck, `test:fast`, `test:tools`, `e2e`. Commit in logical pieces. _T4_
