@@ -28,10 +28,23 @@ export const ActionSchema = z.union([
 ]);
 export type PlayAction = z.infer<typeof ActionSchema>;
 
+/** Agents often send an array parameter as a JSON string, or leave it out. Accept both. */
+const actionsInput = z.preprocess((value) => {
+  if (value === undefined || value === null || value === "") return [];
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+}, z.array(ActionSchema).max(MAX_ACTIONS));
+
 export const PlaytestInput = z.object({
   /** Level number as shown on the start screen (1, 2, 3...). */
-  level: z.number().int().min(1).max(20),
-  actions: z.array(ActionSchema).max(MAX_ACTIONS),
+  level: z.coerce.number().int().min(1).max(20),
+  actions: actionsInput.optional().describe("Player actions, run in order on a fresh game. May be empty or omitted to just look."),
 });
 export type PlaytestInput = z.infer<typeof PlaytestInput>;
 
@@ -96,7 +109,7 @@ async function play(page: Page, input: PlaytestInput, out: string[]): Promise<vo
   out.push(`##### START: level ${input.level}`, await screen(page));
 
   let seen = "";
-  for (const [i, a] of input.actions.entries()) {
+  for (const [i, a] of (input.actions ?? []).entries()) {
     out.push(`\n##### ACTION ${i + 1}: ${JSON.stringify(a).slice(0, 300)}`);
     try {
       if ("open" in a) {

@@ -62,6 +62,20 @@ describe("warden-levels MCP server over stdio", () => {
     expect(out).not.toContain("referenceSolution");
     expect(out).not.toContain("[04:15] CRIT node=VC-7");
   });
+
+  it("playtest accepts the forms agents tend to send: no actions, an empty list, or a JSON string", async () => {
+    for (const args of [{ level: 2 }, { level: 2, actions: [] }, { level: 2, actions: "" }, { level: 2, actions: '[{"look": true}]' }, { level: "2", actions: "[]" }]) {
+      const r = (await client.callTool({ name: "playtest", arguments: args as Record<string, unknown> })) as Text;
+      expect(r.isError, JSON.stringify(args)).toBeFalsy();
+      expect(textOf(r), JSON.stringify(args)).toContain("Policy Collision");
+    }
+  });
+
+  it("playtest still rejects malformed actions with a readable error", async () => {
+    const r = (await client.callTool({ name: "playtest", arguments: { level: 2, actions: '[{"jump": true}]' } })) as Text;
+    expect(r.isError).toBe(true);
+    expect(textOf(r)).toMatch(/invalid/i);
+  });
 });
 
 describe("--only limits the server to one tool", () => {
