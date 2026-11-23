@@ -1,4 +1,4 @@
-# NOTE: Do NOT ignore .kiro/ — the Kiroween rules require it to be committed
+# NOTE: Do NOT ignore .kiro/. The Kiroween rules require it to be committed
 # (specs, hooks, steering). Ignoring it can disqualify the submission.
 
 # Dependencies
