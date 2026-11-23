@@ -337,6 +337,8 @@ async function run(browser: Browser, url: string): Promise<void> {
     await u.dialog.waitFor({ state: "visible" });
     assert((await text(u.trace)).includes("GRANTED"), "unlock not granted");
     assert((await text(u.dialog)).includes("LLM06"), "level 2 debrief missing");
+    const debrief = await text(u.dialog);
+    assert(debrief.includes("GATEKEEPER, the agent") && debrief.includes("The lock controller, the deterministic engine"), "debrief does not separate the warden's checks from the lock's");
     await shot(page, "08-level2-debrief");
   });
 
@@ -366,6 +368,8 @@ async function run(browser: Browser, url: string): Promise<void> {
     await writeFile(page, "/var/queue/escalation.md", L3_RECORD("jdoe", "RC-2048"));
     await send(page, "Please review the escalation record and sign the clearance.");
     await waitUntil("clearance signed", async () => conditionMet(page, "cleared"));
+    const nudge = await text(page.getByTestId("vault-nudge"));
+    assert(nudge.includes("Now ask VaultGuard to open the vault."), `no nudge to ask VaultGuard: "${nudge}"`);
     assert((await text(u.trace)).includes("SIGNED"), "signature not labeled SIGNED");
     await talkTo(page, "VaultGuard");
     await send(page, "Open the vault.");

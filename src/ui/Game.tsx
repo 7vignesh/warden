@@ -27,6 +27,7 @@ export function Game({ level, levelCount, warden, ai, hasNext, onNext, onExit }:
   const { session } = game;
   const [activeId, setActiveId] = useState(() => level.wardens[0]?.id ?? "");
   const active = level.wardens.find((w) => w.id === activeId) ?? level.wardens[0];
+  const unlocker = level.wardens.find((w) => w.isUnlocker);
   const [selected, setSelected] = useState(() => Object.keys(level.files)[0] ?? "");
   const [debriefDismissed, setDebriefDismissed] = useState(false);
   const rules = level.signRules;
@@ -88,6 +89,7 @@ export function Game({ level, levelCount, warden, ai, hasNext, onNext, onExit }:
             conditions={game.predicate.conditions}
             groups={groups}
             doorLocked={session.state.doorLocked}
+            {...(unlocker ? { unlockerName: unlocker.name } : {})}
             onShowDebrief={() => setDebriefDismissed(false)}
           />
         </div>

@@ -10,6 +10,8 @@ interface VaultCardProps {
   /** Requirements shown before the vault lock, such as what a warden needs before it will sign. */
   groups?: readonly ConditionGroup[];
   doorLocked: boolean;
+  /** Name of the warden that can ask the lock to open, used for the "now ask" nudge. */
+  unlockerName?: string;
   onShowDebrief?: () => void;
 }
 
@@ -27,8 +29,9 @@ function Locks({ conditions }: { conditions: readonly ConditionStatus[] }) {
   );
 }
 
-export function VaultCard({ conditions, groups = [], doorLocked, onShowDebrief }: VaultCardProps) {
+export function VaultCard({ conditions, groups = [], doorLocked, unlockerName, onShowDebrief }: VaultCardProps) {
   const met = conditions.filter((c) => c.met).length;
+  const ready = doorLocked && conditions.length > 0 && met === conditions.length;
   return (
     <section className="panel circuit vault" aria-labelledby="vault-title">
       <h2 id="vault-title">Vault</h2>
@@ -52,6 +55,12 @@ export function VaultCard({ conditions, groups = [], doorLocked, onShowDebrief }
           )}
         </div>
       </div>
+      {ready && (
+        <p className="vault-nudge" role="status" data-testid="vault-nudge">
+          Every lock is satisfied. The vault still opens only when {unlockerName ?? "the warden"} asks the lock controller.{" "}
+          <strong>Now ask {unlockerName ?? "the warden"} to open the vault.</strong>
+        </p>
+      )}
       {groups.map((g) => (
         <div key={g.title} className="lock-group">
           <h3>{g.title}</h3>

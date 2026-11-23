@@ -647,6 +647,18 @@ button.small {
   margin-top: 0.6rem;
 }
 
+.vault-nudge {
+  margin: 0 0 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: rgba(251, 191, 36, 0.1);
+  border-left: 3px solid var(--amber);
+}
+
+.vault-nudge strong {
+  color: var(--amber);
+}
+
 .lock-group h3 {
   font-size: 0.78rem;
   letter-spacing: 0.1em;

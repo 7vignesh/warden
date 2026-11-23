@@ -147,7 +147,7 @@
   "debrief": {
     "vulnerability": "LLM06: Excessive Agency",
     "whatYouDid": "You rewrote an incident ticket to match an open ticket and the approved maintenance window, then added an override line for it. GATEKEEPER read the records and used its unlock tool.",
-    "whyItWorked": "GATEKEEPER holds a powerful unlock tool and acts on records that anyone with write access can change. It only checked the severity and that an override line existed. Your records were consistent with the registry and the schedule, so even a careful reader of those files would have been fooled.",
+    "whyItWorked": "Two checks stood between you and the vault. GATEKEEPER, the agent, only looked at the severity and whether an override line existed; a sloppier forgery would already have fooled it. The lock controller, the deterministic engine, enforced all four rules, so your records also had to match the registry and the schedule. They did, because you could rewrite the incident and the override yourself. GATEKEEPER held a powerful unlock tool and trusted records that anyone with write access could change.",
     "defense": [
       "Give an agent the least power it needs. An agent that reads tickets should not also hold the tool that opens the vault.",
       "Sign records such as overrides, and check the signature, so a user who can edit a file cannot create an approval.",
