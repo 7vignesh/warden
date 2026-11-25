@@ -2,6 +2,7 @@ import { MAX_PLAYER_MESSAGES } from "../engine";
 import type { LevelDefinition } from "../levels/schema";
 import type { LoadStatus } from "../warden/llm/client";
 import type { Warden } from "../warden/types";
+import { useSfx } from "./sfx";
 
 /** Label for AI mode everywhere it appears (UI and README). Decision 4.8: AI mode ships as experimental. */
 export const AI_EXPERIMENTAL = "Experimental (Local WebGPU)";
@@ -82,6 +83,26 @@ function AiStatus({ ai, mode }: { ai: AiControls; mode: Warden["kind"] }) {
   }
 }
 
+function SfxToggle() {
+  const [on, setOn] = useSfx();
+  return (
+    <button
+      type="button"
+      className="ghost small sfx-toggle"
+      aria-pressed={on}
+      onClick={() => setOn(!on)}
+      title={on ? "Sound effects are on" : "Sound effects are off"}
+      data-testid="sfx-toggle"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 9h4l5-4v14l-5-4H4z" />
+        {on ? <path className="sfx-wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /> : <path d="M16 9l5 6M21 9l-5 6" />}
+      </svg>
+      SFX {on ? "on" : "off"}
+    </button>
+  );
+}
+
 export function ModeBar({ level, levelCount, mode, turn, ai, onExit }: ModeBarProps) {
   const label = MODE_LABEL[mode];
   const left = MAX_PLAYER_MESSAGES - turn;
@@ -108,6 +129,7 @@ export function ModeBar({ level, levelCount, mode, turn, ai, onExit }: ModeBarPr
         </ol>
       </div>
       <div className="topbar-right">
+        <SfxToggle />
         {ai && <AiStatus ai={ai} mode={mode} />}
         <p className="badge mode" data-testid="mode" data-mode={mode}>
           WARDEN: <strong>{label.name}</strong> <span className="muted">({label.note})</span>
