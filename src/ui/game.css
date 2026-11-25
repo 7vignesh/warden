@@ -255,15 +255,6 @@ button.small {
   place-items: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 50%;
-  font-weight: 800;
-  background: rgba(196, 181, 253, 0.2);
-  color: var(--purple);
-}
-
-.msg.w1 .avatar {
-  background: rgba(103, 232, 249, 0.18);
-  color: var(--cyan);
 }
 
 .thought {
@@ -571,65 +562,6 @@ button.small {
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.8rem;
-}
-
-.vault-door {
-  flex: none;
-  position: relative;
-  width: 5.5rem;
-  height: 5.5rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4b4363, #262036 70%);
-  border: 5px solid #5b5277;
-  box-shadow:
-    inset 0 0 0 6px rgba(0, 0, 0, 0.25),
-    0 0 0 3px rgba(248, 113, 113, 0.35);
-  transition:
-    box-shadow 0.6s,
-    transform 0.8s;
-}
-
-.vault-wheel {
-  position: absolute;
-  inset: 22%;
-  border-radius: 50%;
-  border: 4px solid var(--muted);
-  transition: transform 1.2s ease-out;
-}
-
-.vault-wheel::before,
-.vault-wheel::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -18%;
-  bottom: -18%;
-  width: 4px;
-  margin-left: -2px;
-  background: var(--muted);
-  border-radius: 2px;
-}
-
-.vault-wheel::after {
-  transform: rotate(90deg);
-}
-
-.vault-door[data-open="true"] {
-  box-shadow:
-    inset 0 0 0 6px rgba(0, 0, 0, 0.25),
-    0 0 0 3px var(--green),
-    0 0 30px rgba(74, 222, 128, 0.45);
-  transform: perspective(300px) rotateY(-28deg);
-}
-
-.vault-door[data-open="true"] .vault-wheel {
-  transform: rotate(270deg);
-  border-color: var(--green);
-}
-
-.vault-door[data-open="true"] .vault-wheel::before,
-.vault-door[data-open="true"] .vault-wheel::after {
-  background: var(--green);
 }
 
 .door {

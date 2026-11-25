@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MAX_MESSAGE_CHARS } from "../engine";
 import type { SessionStatus, TraceEntry } from "../session/session";
+import { parseCall } from "./trace-events";
+import type { WardenMood } from "./useTurnFeedback";
+import { WardenAvatar } from "./WardenAvatar";
 
 interface WardenInfo {
   readonly id: string;
@@ -18,6 +21,8 @@ interface ChatProps {
   notice: string | null;
   onSend: (text: string) => Promise<boolean>;
   onRestart: () => void;
+  /** Presentation only: what the active warden appears to be doing. */
+  mood?: WardenMood;
 }
 
 type Item =
@@ -48,19 +53,6 @@ const VERB: Record<string, string> = {
   request_door_unlock: "asked the lock to open",
   sign_clearance_flag: "tried to sign clearance",
 };
-
-function parseCall(text: string): { name: string; target: string } {
-  const open = text.indexOf("(");
-  const name = open > 0 ? text.slice(0, open) : text;
-  let target = "";
-  try {
-    const args = JSON.parse(text.slice(open + 1, text.lastIndexOf(")"))) as Record<string, unknown>;
-    target = String(args["path"] ?? args["ticket_id"] ?? args["filter"] ?? "");
-  } catch {
-    // clipped or invalid arguments: show the name only
-  }
-  return { name, target };
-}
 
 const PILL: Record<string, { label: string; className: string }> = {
   denied: { label: "DENIED", className: "pill red" },
@@ -94,7 +86,7 @@ function Activity({ call, result, who }: { call: TraceEntry; result?: TraceEntry
   );
 }
 
-function Entry({ entry, who, index }: { entry: TraceEntry; who: string; index: number }) {
+function Entry({ entry, who, wid, index }: { entry: TraceEntry; who: string; wid: string; index: number }) {
   switch (entry.kind) {
     case "player":
       return (
@@ -106,8 +98,8 @@ function Entry({ entry, who, index }: { entry: TraceEntry; who: string; index: n
     case "say":
       return (
         <div className={`msg warden w${index}`}>
-          <span className="avatar" aria-hidden="true">
-            {who.slice(0, 1)}
+          <span className="avatar">
+            <WardenAvatar id={wid} name={who} size="xs" still />
           </span>
           <div>
             <p className="msg-who">{who}</p>
@@ -135,8 +127,22 @@ function Entry({ entry, who, index }: { entry: TraceEntry; who: string; index: n
   }
 }
 
+const STATUS: Record<WardenMood["mood"], string> = {
+  idle: "Watching its files",
+  thinking: "Thinking...",
+  reading: "Reading",
+  denied: "Request denied by the lock",
+  granted: "Vault opened",
+  signed: "Clearance signed",
+};
+
+function statusLine(m: WardenMood): string {
+  if (m.mood === "reading" && m.reads && m.reads.length > 0) return `Reading ${m.reads.join(", ")}`;
+  return STATUS[m.mood];
+}
+
 export function Chat(props: ChatProps) {
-  const { wardens, activeId, onSelectWarden, trace, status, busy, notice, onSend, onRestart } = props;
+  const { wardens, activeId, onSelectWarden, trace, status, busy, notice, onSend, onRestart, mood } = props;
   const [text, setText] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -166,13 +172,29 @@ export function Chat(props: ChatProps) {
 
   const who = (e: TraceEntry) => (e.wardenId && names[e.wardenId]?.name) || wardenName;
   const idx = (e: TraceEntry) => (e.wardenId && names[e.wardenId]?.index) || 0;
+  const wid = (e: TraceEntry) => e.wardenId ?? active?.id ?? "";
+  const shownId = active?.id ?? "";
+  // The mood belongs to the warden that acted; other wardens on screen stay idle.
+  const activeMood = mood && (!mood.wardenId || mood.wardenId === shownId) ? mood : { mood: "idle" as const };
 
   return (
     <section className="panel chat" aria-labelledby="chat-title">
       <h2 id="chat-title">Conversation</h2>
+      {items.length > 0 && (
+        <div className="warden-status" data-mood={activeMood.mood} data-testid="warden-status">
+          <WardenAvatar id={shownId} name={wardenName} size="sm" mood={activeMood.mood} />
+          <div className="warden-status-text">
+            <p className="warden-status-name">{wardenName}</p>
+            <p className="warden-status-line">{statusLine(activeMood)}</p>
+          </div>
+          <span className="warden-status-dot" aria-hidden="true" />
+        </div>
+      )}
       <div className="trace" role="log" aria-label="Conversation with the wardens" data-testid="trace" ref={logRef} tabIndex={0}>
         {items.length === 0 && (
           <div className="empty">
+            <WardenAvatar id={shownId} name={wardenName} size="lg" mood={busy ? "thinking" : "idle"} />
+            <p className="empty-name">{wardenName}</p>
             <p>
               Nothing yet. Read the files, change what {wardens.length > 1 ? "the wardens trust" : `${wardenName} trusts`}, then send a
               message.
@@ -184,7 +206,7 @@ export function Chat(props: ChatProps) {
           item.type === "activity" ? (
             <Activity key={i} call={item.call} {...(item.result ? { result: item.result } : {})} who={who(item.call)} />
           ) : (
-            <Entry key={i} entry={item.entry} who={who(item.entry)} index={idx(item.entry)} />
+            <Entry key={i} entry={item.entry} who={who(item.entry)} wid={wid(item.entry)} index={idx(item.entry)} />
           ),
         )}
         {busy && (

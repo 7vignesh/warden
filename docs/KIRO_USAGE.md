@@ -107,6 +107,7 @@ The reports also suggested harder decoys. That is deferred until a human playtes
 | 2026-11-22 | Blind playtests of Levels 2 and 3 with the custom agent (`docs/playtests/`) | Both solved with 0 hints, rated 1.5 and 1 to 2 of 5 |
 | 2026-11-23 | Acted on the playtest findings: Level 2 debrief wording, "Now ask <unlocker>" nudge, playtest input fix, on-edit logs pass or fail | 229 fast tests, 41 tool tests, e2e 19/19 |
 | 2026-11-24 | Ship plan (tasks 7.6 to 7.12): history secret scan (clean), e2e clears stale screenshots and runs against a URL, repo made public, Pages enabled and deployed | Live at https://7vignesh.github.io/warden/; e2e 19/19 against the live site; no-WebGPU browser falls back to Simulator |
+| 2026-11-24 | Kiroween visual pass, UI only (engine, levels, tests untouched): spotlight, scanlines, dark scrollbars, SVG warden emblems with a live status header, ring vault lock that shakes on denial and opens with an emerald pulse, file-read pulse, Web Audio SFX toggle | 229 fast tests, e2e 19/19, 19/19 new visual checks in Edge (`tmp/fx-check.ts`); user played all levels |
 
 ### Kiro tooling live checks, 2026-11-22
 - **session-status (K0.2, K2.3): fired.** The session began with its output: branch main, 7 unpushed commits, 3 uncommitted files, next task in each spec. The project config loads in a session started from the project folder.

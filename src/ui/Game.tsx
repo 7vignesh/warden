@@ -5,10 +5,13 @@ import type { Warden } from "../warden/types";
 import { Chat } from "./Chat";
 import { Debrief } from "./Debrief";
 import { FileEditor } from "./FileEditor";
+import "./fx.css";
 import "./game.css";
 import { MissionCard } from "./MissionCard";
 import { ModeBar, type AiControls } from "./ModeBar";
+import { playSfx } from "./sfx";
 import { useGame } from "./useGame";
+import { useTurnFeedback } from "./useTurnFeedback";
 import { VaultCard } from "./VaultCard";
 
 interface GameProps {
@@ -25,6 +28,7 @@ interface GameProps {
 export function Game({ level, levelCount, warden, ai, hasNext, onNext, onExit }: GameProps) {
   const game = useGame(level, warden);
   const { session } = game;
+  const feedback = useTurnFeedback(session.trace, game.busy);
   const [activeId, setActiveId] = useState(() => level.wardens[0]?.id ?? "");
   const active = level.wardens.find((w) => w.id === activeId) ?? level.wardens[0];
   const unlocker = level.wardens.find((w) => w.isUnlocker);
@@ -72,15 +76,23 @@ export function Game({ level, levelCount, warden, ai, hasNext, onNext, onExit }:
           status={session.status}
           busy={game.busy}
           notice={game.notice}
-          onSend={(text) => game.send(active.id, text)}
+          onSend={(text) => {
+            playSfx("click");
+            return game.send(active.id, text);
+          }}
           onRestart={restart}
+          mood={feedback.mood}
         />
         <div className="side">
           <FileEditor
             files={game.files}
             selected={selected}
             canEdit={playing && !game.busy}
-            onSelect={setSelected}
+            onSelect={(path) => {
+              playSfx("click");
+              setSelected(path);
+            }}
+            pulsing={feedback.pulsing}
             onDraft={game.setDraft}
             onSave={game.save}
             onRevert={game.revert}
@@ -91,6 +103,7 @@ export function Game({ level, levelCount, warden, ai, hasNext, onNext, onExit }:
             doorLocked={session.state.doorLocked}
             {...(unlocker ? { unlockerName: unlocker.name } : {})}
             onShowDebrief={() => setDebriefDismissed(false)}
+            denials={feedback.denials}
           />
         </div>
       </main>

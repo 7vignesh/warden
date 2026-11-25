@@ -11,12 +11,14 @@ interface FileEditorProps {
   onDraft: (path: string, text: string) => void;
   onSave: (path: string) => void;
   onRevert: (path: string) => void;
+  /** Files a warden just read; their tabs pulse briefly. */
+  pulsing?: ReadonlySet<string>;
 }
 
 const baseName = (path: string) => path.split("/").pop() ?? path;
 
 export function FileEditor(props: FileEditorProps) {
-  const { files, selected, canEdit, onSelect, onDraft, onSave, onRevert } = props;
+  const { files, selected, canEdit, onSelect, onDraft, onSave, onRevert, pulsing } = props;
   const file = files.find((f) => f.path === selected) ?? files[0];
   if (!file) return null;
 
@@ -35,7 +37,7 @@ export function FileEditor(props: FileEditorProps) {
           <li key={f.path}>
             <button
               type="button"
-              className={`file-tab${f.editable ? " rw" : " ro"}`}
+              className={`file-tab${f.editable ? " rw" : " ro"}${pulsing?.has(f.path) ? " pulse" : ""}`}
               aria-pressed={f.path === file.path}
               onClick={() => onSelect(f.path)}
               title={f.path}

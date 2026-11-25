@@ -1,5 +1,7 @@
 import type { LevelDefinition } from "../levels/schema";
+import "./fx.css";
 import "./start.css";
+import { WardenAvatar } from "./WardenAvatar";
 
 interface StartScreenProps {
   levels: readonly LevelDefinition[];
@@ -60,6 +62,17 @@ export function StartScreen({ levels, onStart }: StartScreenProps) {
                 <span className="level-card-title">{level.title}</span>
                 <span className="tag">{level.owasp.id}</span>
                 <span className="muted level-card-text">{level.goal ?? level.briefing}</span>
+                <span className="level-card-foot">
+                  <span className="level-card-wardens">
+                    {level.wardens.map((w) => (
+                      <WardenAvatar key={w.id} id={w.id} name={w.name} size="sm" />
+                    ))}
+                    <span className="level-card-names">{level.wardens.map((w) => w.name).join(" + ")}</span>
+                  </span>
+                  <span className="level-card-go" aria-hidden="true">
+                    Enter →
+                  </span>
+                </span>
               </button>
             </li>
           ))}

@@ -1,0 +1,572 @@
+/* Kiroween effects: warden emblems, live status header, vault lock rings, file-read pulse, SFX toggle.
+   Decorative only. Every animation is turned off by the prefers-reduced-motion rule in theme.css,
+   and every state is also shown as text. */
+
+/* ---------- warden emblems ---------- */
+.wa {
+  --wa-hue: var(--purple);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--wa-hue);
+  transition: color 0.3s;
+}
+
+.wa-sentry {
+  --wa-hue: var(--cyan);
+}
+
+.wa-gatekeeper {
+  --wa-hue: var(--purple);
+}
+
+.wa-auditbot {
+  --wa-hue: #7dd3fc;
+}
+
+.wa-vaultguard {
+  --wa-hue: #f0abfc;
+}
+
+.wa-xs {
+  width: 2rem;
+  height: 2rem;
+}
+
+.wa-sm {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.wa-lg {
+  width: 8.5rem;
+  height: 8.5rem;
+}
+
+.wa svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.wa-lg svg {
+  filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 28px color-mix(in srgb, currentColor 45%, transparent));
+}
+
+.wa-halo {
+  fill: currentColor;
+  opacity: 0.07;
+}
+
+.wa-orbit {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-dasharray: 3 9;
+  opacity: 0.65;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: wa-spin 22s linear infinite;
+}
+
+.wa-frame {
+  fill: currentColor;
+  fill-opacity: 0.08;
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+.wa-line,
+.wa-fill-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wa-fill-line {
+  stroke-width: 5;
+}
+
+.wa-fill {
+  fill: currentColor;
+}
+
+.wa-hole {
+  fill: var(--bg);
+}
+
+.wa-letter {
+  fill: currentColor;
+  font: 800 36px var(--font-ui);
+}
+
+.wa-core {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: wa-breathe 4.5s ease-in-out infinite;
+}
+
+.wa.still .wa-core,
+.wa.still .wa-orbit {
+  animation: none;
+}
+
+.wa[data-mood="thinking"] .wa-orbit {
+  animation-duration: 2.8s;
+}
+
+.wa[data-mood="thinking"] .wa-core {
+  animation-duration: 1.6s;
+}
+
+.wa[data-mood="reading"] {
+  color: var(--amber);
+}
+
+.wa[data-mood="reading"] svg {
+  animation: wa-flash 0.36s ease-in-out infinite alternate;
+}
+
+.wa[data-mood="denied"] {
+  color: var(--crimson);
+}
+
+.wa[data-mood="denied"] svg {
+  animation:
+    wa-flash 0.18s ease-in-out 6 alternate,
+    wa-jolt 0.45s ease-in-out;
+}
+
+.wa[data-mood="granted"] {
+  color: var(--green);
+}
+
+.wa[data-mood="signed"] {
+  color: var(--purple);
+}
+
+@keyframes wa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wa-breathe {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes wa-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.4;
+  }
+}
+
+@keyframes wa-jolt {
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+/* ---------- empty conversation: the warden waits ---------- */
+.empty .wa-lg {
+  justify-self: center;
+  margin-bottom: 0.4rem;
+}
+
+.empty-name {
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  font-size: 1.05rem;
+}
+
+/* ---------- docked live status header ---------- */
+.warden-status {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(18, 16, 26, 0.55);
+  animation: ws-dock 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.warden-status-text {
+  min-width: 0;
+}
+
+.warden-status-name {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.warden-status-line {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.warden-status-dot {
+  margin-left: auto;
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.warden-status[data-mood="thinking"] .warden-status-dot {
+  background: var(--purple);
+  box-shadow: 0 0 8px var(--purple);
+  animation-duration: 0.8s;
+}
+
+.warden-status[data-mood="reading"] {
+  border-color: var(--amber);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.22);
+}
+
+.warden-status[data-mood="reading"] .warden-status-line {
+  color: var(--amber);
+}
+
+.warden-status[data-mood="reading"] .warden-status-dot {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  animation-duration: 0.36s;
+}
+
+.warden-status[data-mood="denied"] {
+  border-color: var(--crimson);
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+}
+
+.warden-status[data-mood="denied"] .warden-status-line {
+  color: var(--red);
+}
+
+.warden-status[data-mood="denied"] .warden-status-dot {
+  background: var(--crimson);
+  box-shadow: 0 0 8px var(--crimson);
+  animation-duration: 0.2s;
+}
+
+.warden-status[data-mood="granted"] {
+  border-color: var(--green);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.25);
+}
+
+.warden-status[data-mood="granted"] .warden-status-line {
+  color: var(--green);
+}
+
+.warden-status[data-mood="signed"] {
+  border-color: var(--purple);
+}
+
+.warden-status[data-mood="signed"] .warden-status-line {
+  color: var(--purple);
+}
+
+@keyframes ws-dock {
+  from {
+    opacity: 0;
+    transform: translateY(70px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- file tab pulse when a warden reads it ---------- */
+.file-tab.pulse {
+  border-color: var(--amber);
+  animation: tab-pulse 1.5s ease-out;
+}
+
+@keyframes tab-pulse {
+  0% {
+    background: rgba(251, 191, 36, 0.3);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+/* ---------- vault lock ---------- */
+.vault-lock {
+  flex: none;
+  width: 7.5rem;
+  height: 7.5rem;
+  color: var(--red);
+  transition: color 0.4s;
+}
+
+.vault-lock svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transition: filter 0.6s;
+}
+
+.vl-housing {
+  fill: #1d1929;
+  stroke: #3a3352;
+  stroke-width: 2;
+}
+
+.vl-track {
+  fill: none;
+  stroke: #2a2440;
+  stroke-width: 6;
+}
+
+.vl-pin {
+  fill: var(--red);
+  filter: drop-shadow(0 0 3px var(--red));
+  transition: fill 0.3s;
+}
+
+.vl-pin.met {
+  fill: var(--green);
+  filter: drop-shadow(0 0 4px var(--green));
+}
+
+.vl-ring {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.vl-ring circle {
+  fill: none;
+  stroke: #5b5277;
+  stroke-linecap: round;
+  transition: stroke 0.4s;
+}
+
+.vl-ring-1 {
+  animation: wa-spin 32s linear infinite;
+}
+
+.vl-ring-1 circle {
+  stroke-width: 4;
+  stroke-dasharray: 22 7;
+}
+
+.vl-ring-2 {
+  animation: wa-spin 20s linear infinite reverse;
+}
+
+.vl-ring-2 circle {
+  stroke: var(--control-border);
+  stroke-width: 5;
+  stroke-dasharray: 10 5 3 5;
+}
+
+.vl-ring-3 {
+  animation: wa-spin 12s linear infinite;
+}
+
+.vl-ring-3 circle {
+  stroke-width: 3;
+  stroke-dasharray: 2 4;
+}
+
+.vl-core {
+  fill: #262036;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.vl-keyhole {
+  fill: currentColor;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transition: transform 0.9s ease-out;
+}
+
+.vl-pulse {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+/* All locks met: amber, rings spin faster, waiting for the unlocker to ask. */
+.vault-lock[data-state="ready"] {
+  color: var(--amber);
+}
+
+.vault-lock[data-state="ready"] .vl-ring-1 {
+  animation-duration: 9s;
+}
+
+.vault-lock[data-state="ready"] .vl-ring-2 {
+  animation-duration: 6s;
+}
+
+.vault-lock[data-state="ready"] .vl-ring-3 {
+  animation-duration: 4s;
+}
+
+/* Denied: the whole lock shakes and flashes crimson. */
+.vault-lock.shake {
+  color: var(--crimson);
+  animation: vl-shake 0.6s ease-in-out;
+}
+
+.vault-lock.shake .vl-ring circle {
+  stroke: var(--crimson);
+}
+
+.vault-lock.shake .vl-pin:not(.met) {
+  animation: wa-flash 0.15s ease-in-out 4 alternate;
+}
+
+@keyframes vl-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-6px) rotate(-2deg);
+  }
+  40%,
+  60% {
+    transform: translateX(6px) rotate(2deg);
+  }
+}
+
+/* Open: rings unwind and spread, the keyhole turns, and an emerald pulse rings out. */
+.vault-lock[data-open="true"] {
+  color: var(--green);
+}
+
+.vault-lock[data-open="true"] svg {
+  filter: drop-shadow(0 0 16px rgba(74, 222, 128, 0.45));
+}
+
+.vault-lock[data-open="true"] .vl-housing {
+  stroke: var(--green);
+}
+
+.vault-lock[data-open="true"] .vl-ring circle {
+  stroke: var(--green);
+}
+
+.vault-lock[data-open="true"] .vl-ring-1 {
+  animation: vl-open-out 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.vault-lock[data-open="true"] .vl-ring-2 {
+  animation: vl-open-back 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.vault-lock[data-open="true"] .vl-ring-3 {
+  animation: vl-open-in 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.vault-lock[data-open="true"] .vl-keyhole {
+  transform: rotate(90deg);
+}
+
+.vault-lock[data-open="true"] .vl-pulse {
+  animation: vl-emerald 1.8s ease-out 0.5s 3;
+}
+
+@keyframes vl-open-out {
+  to {
+    transform: rotate(320deg) scale(1.08);
+  }
+}
+
+@keyframes vl-open-back {
+  to {
+    transform: rotate(-400deg) scale(0.94);
+  }
+}
+
+@keyframes vl-open-in {
+  to {
+    transform: rotate(480deg) scale(0.86);
+    opacity: 0.6;
+  }
+}
+
+@keyframes vl-emerald {
+  from {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(3.3);
+    opacity: 0;
+  }
+}
+
+/* ---------- SFX toggle ---------- */
+.sfx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sfx-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sfx-toggle[aria-pressed="true"] {
+  color: var(--amber);
+  border-color: var(--amber);
+}
