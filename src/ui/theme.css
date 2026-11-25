@@ -10,6 +10,7 @@
   --amber: #fbbf24;
   --green: #4ade80;
   --red: #f87171;
+  --crimson: #f43f5e;
   --purple: #c4b5fd;
   --cyan: #67e8f9;
   --on-amber: #1a1205;
@@ -33,10 +34,46 @@
 body {
   margin: 0;
   min-height: 100vh;
+  /* Vignette first, so the edges of the screen fall off into darkness behind the content. */
   background:
+    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
     radial-gradient(1200px 600px at 85% -10%, rgba(196, 181, 253, 0.12), transparent 60%),
     radial-gradient(900px 500px at -10% 110%, rgba(251, 191, 36, 0.08), transparent 60%),
     var(--bg);
+  background-attachment: fixed;
+}
+
+/* ---------- dark scrollbars ----------
+   Standard properties for Chrome, Edge and Firefox; the ::-webkit rules cover Safari. */
+html,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4262 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3352;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5b5277;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 h1,
@@ -86,6 +123,16 @@ ol {
   z-index: -1;
   background: radial-gradient(700px 400px at 50% 0%, rgba(196, 181, 253, 0.07), transparent 70%);
   animation: drift 14s ease-in-out infinite alternate;
+}
+
+/* Faint CRT scanlines over everything. Never intercepts clicks; light enough to keep text contrast. */
+.app::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 3px);
 }
 
 @keyframes drift {
