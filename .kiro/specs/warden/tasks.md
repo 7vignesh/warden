@@ -62,8 +62,8 @@ Start only after 4.8 is recorded.
 
 ## Phase 6: Polish and Kiro evidence
 - [ ] 6.1 Level select, progress persistence in `localStorage`, final screen.
-- [ ] 6.2 Sound and visual polish within budget (optional).
-- [ ] 6.3 Optional MCP server exposing `validate_level` and `solve_level` for Kiro to author levels. Only add if used; log in `docs/KIRO_USAGE.md`. 
+- [x] 6.2 Sound and visual polish within budget (optional). Done 2026-11-24: Web Audio SFX toggle (off by default), warden emblems, ring vault lock, scanlines.
+- [x] 6.3 Optional MCP server exposing `validate_level` and `solve_level` for Kiro to author levels. Only add if used; log in `docs/KIRO_USAGE.md`. Done as `warden-levels` (spec `.kiro/specs/kiro-tooling/`).
 - [x] 6.4 Keep `docs/KIRO_USAGE.md` current (hook logs after each task).
 
 ## Phase 7: Ship

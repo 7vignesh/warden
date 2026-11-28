@@ -32,6 +32,8 @@ target/
 npm-debug.log*
 .cache/
 tmp/
+# Demo video output from the unveo skill (MP4s and work files)
+unveo-out/
 
 # OS / editor
 .DS_Store

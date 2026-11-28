@@ -18,7 +18,7 @@ export const CANDIDATE_MODELS: readonly ModelInfo[] = [
   { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", label: "Llama 3.2 1B", downloadMB: 663, vramMB: 879 },
 ];
 
-/** Model the game loads in AI mode. Provisional until the benchmark decision (task 4.8). */
+/** Model the game loads in AI mode. Decision 4.8: AI mode ships as experimental with this model. */
 export const GAME_MODEL: ModelInfo = CANDIDATE_MODELS[0] as ModelInfo;
 
 /** Installed @mlc-ai/web-llm version, recorded in benchmark results. tests/llm.test.ts checks it. */
